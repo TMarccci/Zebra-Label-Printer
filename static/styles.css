@@ -1,0 +1,76 @@
+body {
+    background-color: #008860;
+}
+
+h3 {
+    font-weight: bold;
+}
+
+/* Tables */
+.table-transparent {
+    --bs-table-bg: transparent !important;
+}
+
+td {
+	border-bottom: none;
+}
+
+.border-none {
+    border: none !important;
+}
+
+.default-text {
+	font-size: 70% !important;
+}
+
+/* Price buttons */
+.price:hover,
+.price:active {
+    background-color: #a3a3a3 !important;
+    border-color: #a3a3a3 !important;
+    color: black !important;
+}
+
+/* Action Buttons */
+#cleanup {
+    background-color: #ffd7d4 !important;
+    border-color: transparent !important;
+}
+
+#reprint {
+    background-color: #f7ffb8 !important;
+    border-color: transparent !important;
+}
+
+/* Label Styles */
+.sale-label-style,
+.normal-label-style {
+    border-radius: 10px;
+    border-width: 1px;
+    border-style: solid;
+}
+
+.sale-label-style {
+    background-color: yellow;
+    border-color: yellow;
+}
+
+.normal-label-style {
+    background-color: white;
+    border-color: white;
+    line-height: 450%;
+}
+
+.label-text {
+    font-weight: bold;
+    color: black;
+}
+
+/* Recent History Buttons */
+.recent-label {
+    cursor: pointer;
+    border: none;
+    background: none;
+    text-align: center;
+    font-family: sans-serif;
+}

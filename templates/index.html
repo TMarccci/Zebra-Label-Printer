@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zebra Price Labeler</title>
+
+    <link rel="icon" href="data:,">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple_touch_icon.png') }}">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-LN+7fdVzj6u52u30Kp6M/trliBMCMKTyK833zpbD+pXdCLuTusPj697FH4R/5mcr" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ndDqU0Gzau9qJ1lfW4pNLlhNTkCfHzAVBReH9diLvGRem5+R9g2FzA8ZGN954O5Q"
+        crossorigin="anonymous"></script>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body>
+    <div class="header mx-4 my-1 py-2 d-flex">		
+		<img src="{{ url_for('static', filename='favicon.png') }}" alt="Logo" height="50"/>
+
+        <h3 class="mt-1 ms-4 text-white fw-bold">Zebra Price Labeler</h3>
+    </div>
+
+    <div class="container-fluid">
+        <div class="row mx-4">
+            <!-- LEFT SIDE PANEL -->
+            <div class="col-12 col-md-4 mb-3">
+
+                <div class="btn-group w-100 my-2" role="group" aria-label="Price Toggle">
+                    <input type="radio" class="btn-check" name="oldnew" id="old" value="old" autocomplete="off" checked>
+                    <label class="btn btn-outline-light w-50 btn-toggle-label" for="old">SALE PRICE</label>
+
+                    <input type="radio" class="btn-check" name="oldnew" id="new" value="new" autocomplete="off">
+                    <label class="btn btn-outline-light w-50 btn-toggle-label" for="new">NORMAL PRICE</label>
+                </div>
+
+                <form method="POST" action="/">
+                    <!-- SALE PART -->
+                    <div id="salepart" class="mb-1">
+
+                        <!-- OLD PRICE -->
+                        <div class="mb-3">
+                            <div class="input-group">
+                                <label for="oldprice" class="input-group-text">
+                                    OLD PRICE <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" class="form-control" id="oldprice" name="oldprice" step="1" min="0">
+                                <span class="input-group-text">{{ customConfig.currency }}</span>
+                            </div>
+                        </div>
+
+                        <!-- DISCOUNT -->
+                        <div class="mb-3">
+                            <input type="radio" id="0" name="discount" value="" class="btn-check d-none" checked>
+
+                            <div class="btn-group discount-btns d-flex flex-wrap">
+                                {% for discount in [20, 30, 40, 50, 60, 70] %}
+                                <input type="radio" id="{{ discount }}" name="discount" value="{{ (100 - discount) / 100 }}"
+                                    class="btn-check">
+                                <label class="btn btn-outline-light" for="{{ discount }}">{{ discount }}%</label>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NEW PRICE -->
+                    <div class="mb-3">
+                        <div class="input-group">
+                            <label for="newprice" class="input-group-text">
+                                NEW PRICE <span class="text-danger" id="newprice-star">*</span>
+                            </label>
+                            <input type="float" class="form-control" id="newprice" name="newprice" min="0">
+                            <span class="input-group-text">{{ customConfig.currency }}</span>
+                        </div>
+                    </div>
+
+                    <!-- QUANTITY -->
+                    <div class="mb-3">
+                        <div class="input-group mb-2">
+                            <label for="printqty" class="input-group-text">
+                                Qty <span class="text-muted default-text">(Default: 1)</span>
+                            </label>
+                            <input type="number" class="form-control" id="printqty" name="printqty" step="1" min="1"
+                                max="300">
+                            <span class="input-group-text">PC</span>
+                        </div>
+
+                        <div class="d-flex flex-wrap btn-group">
+                            {% for qty in [2, 3, 4, 5, 6, 12, 18] %}
+                            <button type="button" class="btn btn-outline-light qpc" data-qty="{{ qty }}">x{{ qty }}</button>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- HISTORY HEADER -->
+                    <div class="mb-1">
+                        <span class="form-label fw-bold text-light">HISTORY</span>
+                    </div>
+                    <br id="prevprints" class="mt-2">
+
+                    <!-- BUTTONS -->
+                    <div class="d-flex gap-3">
+                        <input type="submit" value="Submit" class="btn btn-light">
+                        <button type="button" class="btn btn-light" id="reprint">Reprint Last</button>
+                        <button type="button" class="btn btn-danger" id="cleanup">🗑</button>
+                    </div>
+                </form>
+
+            </div>
+
+            <!-- RIGHT SIDE PRICING GRID -->
+            <div class="col-12 col-md-8 mb-3">
+                <div class="table-responsive mx-auto">
+                    <table id="price-buttons" class="table table-hover text-center align-middle table-transparent">
+                        <tbody>
+                            {% for i in range(2, 100, 3) %}
+							<tr class="border-none">
+								{% for offset in [0, 0, 1, 1, 2, 2] %}
+									{% set base = (i + offset) * 1000 %}
+									{% set value = base + (490 if loop.index is not even else 990) %}
+									{% if customConfig.show_decimals %}
+										{% set display_value = ("{0:.{1}f}".format(value, customConfig.decimal_places)) %}
+									{% else %}
+										{% set display_value = value | round | int %}
+									{% endif %}
+									<td>
+										<button type="button" class="btn btn-outline-light bg-light text-dark price text-nowrap"
+											data-price="{{ value }}">
+											{{ display_value }} {{ customConfig.currency }}
+										</button>
+									</td>
+								{% endfor %}
+							</tr>
+
+							{% if loop.index % 3 == 0 and not loop.last %}
+							<tr class="border-none">
+								<td colspan="6"><hr class="my-2"></td>
+							</tr>
+							{% endif %}
+							{% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+	
+	<script id="price-config"
+		data-currency="{{ customConfig.currency }}"
+		data-show-decimals="{{ customConfig.show_decimals }}"
+		data-decimal-places="{{ customConfig.decimal_places }}">
+	</script>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
