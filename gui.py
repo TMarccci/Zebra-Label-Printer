@@ -7,7 +7,7 @@ import json
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QMessageBox, QCheckBox, QSpinBox,
-    QRadioButton
+    QRadioButton, QMenuBar
 )
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QIcon, QPixmap
@@ -123,7 +123,8 @@ class ControlGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Zebra Label Printer")
-        self.resize(350, 360)
+        self.resize(350, 500)
+        self.setFixedSize(self.size())
 
         self.server_process = None
         self.config = load_config()
@@ -144,13 +145,25 @@ class ControlGUI(QWidget):
     # UI
     def setup_ui(self):
         layout = QVBoxLayout()
+        
+        # Add MenuBar
+        menubar = QMenuBar(self)
+        file_menu = menubar.addMenu("File")
+        file_menu.addAction("Exit", self.close)
+        help_menu = menubar.addMenu("Help")
+        help_menu.addAction("About", lambda: QMessageBox.information(self, "About", "Zebra Label Printer<br>Version 1.0<br><br>Made with ❤️ by Marcell Tihanyi" +
+                                                                     "<br><br><a href='https://tmarccci.hu'>tmarccci.hu</a>" +
+                                                                     " | <a href='https://github.com/TMarccci'>GitHub</a>"),)
+        layout.setMenuBar(menubar)
 
+        # Status
         self.status_label = QLabel("🔴 Server Stopped")
         self.status_label.setStyleSheet("font-size: 16px")
         layout.addWidget(self.status_label)
 
         layout.addSpacing(20)
 
+        # Server settings
         layout.addWidget(QLabel("Server Settings:"))
         layout.addLayout(self._row("Webserver Port:", "server_port"))
         layout.addLayout(self._row("Printer IP:", "printer_ip"))
@@ -161,11 +174,11 @@ class ControlGUI(QWidget):
         
         layout.addSpacing(20)
         
+        # Currency settings
         layout.addWidget(QLabel("Currency Settings:"))
         layout.addLayout(self._radio_row("Price Suggestion Type:", ["Hungary", "Poland", "Czech"], "price_suggestion_type"))
         layout.addLayout(self._row("Visible Currency:", "currency"))
 
-        # decimal settings
         hl = QHBoxLayout()
         self.decimals_checkbox = QCheckBox("Show decimals")
         self.decimals_checkbox.setChecked(self.config["show_decimals"])
@@ -183,18 +196,22 @@ class ControlGUI(QWidget):
         
         layout.addSpacing(30)
 
+        # Server control
         hl2 = QHBoxLayout()
         hl2.addWidget(self.button("Start Server", "start_btn"))
         hl2.addWidget(self.button("Stop Server", "stop_btn"))
         layout.addLayout(hl2)
 
+
+        # Open web interface
         layout.addWidget(self.button("Open Printer Page", "open_web_btn"))
 
-        # NEW BUTTON: QR Code
+        # QR Code
         layout.addWidget(self.button("QR Code", "qr_btn"))
 
         self.setLayout(layout)
 
+    # UI HELPERS
     def _row(self, label, cfg_key):
         hl = QHBoxLayout()
         hl.addWidget(QLabel(label))
@@ -206,7 +223,7 @@ class ControlGUI(QWidget):
     def _radio_row(self, label, options, cfg_key):
         hl = QHBoxLayout()
         hl.addWidget(QLabel(label))
-        # Radio buttons would go here
+
         radios = []
         for opt in options:
             rb = QRadioButton(opt)

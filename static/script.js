@@ -215,6 +215,7 @@
         if (!history.length) {
             row.textContent = "History will show here...";
             row.style.color = "white";
+            row.style.marginLeft = "0px";
         } else {
             history.forEach(entry => row.appendChild(createHistoryButton(entry)));
         }

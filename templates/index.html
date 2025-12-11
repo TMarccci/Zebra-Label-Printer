@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zebra Price Labeler</title>
 
+    <!-- Import Assets-->
     <link rel="icon" href="data:,">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon.png') }}">
     <link rel="apple-touch-icon" sizes="180x180" href="{{ url_for('static', filename='apple_touch_icon.png') }}">
@@ -20,12 +21,14 @@
 </head>
 
 <body>
+    <!-- HEADER -->
     <div class="header mx-4 my-1 py-2 d-flex">		
 		<img src="{{ url_for('static', filename='favicon.png') }}" alt="Logo" height="50"/>
 
         <h3 class="mt-1 ms-4 text-white fw-bold">Zebra Price Labeler</h3>
     </div>
 
+    <!-- MAIN CONTAINER -->
     <div class="container-fluid">
         <div class="row mx-4">
             <!-- LEFT SIDE PANEL -->
@@ -105,9 +108,9 @@
 
                     <!-- BUTTONS -->
                     <div class="d-flex gap-3">
-                        <input type="submit" value="Submit" class="btn btn-light">
-                        <button type="button" class="btn btn-light" id="reprint">Reprint Last</button>
-                        <button type="button" class="btn btn-danger" id="cleanup">🗑</button>
+                        <input type="submit" value="Submit" class="btn btn-light fw-bold">
+                        <button type="button" class="btn btn-light fw-bold" id="reprint">Reprint Last</button>
+                        <button type="button" class="btn btn-danger text-black fw-bold" id="cleanup">🗑</button>
                     </div>
                 </form>
 
