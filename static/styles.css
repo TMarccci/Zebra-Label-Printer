@@ -32,6 +32,11 @@ td {
 }
 
 /* Action Buttons */
+#clearhistory {
+    background-color: #ffd7d4 !important;
+    border-color: transparent !important;
+}
+
 #cleanup {
     background-color: #ffd7d4 !important;
     border-color: transparent !important;
@@ -73,4 +78,5 @@ td {
     background: none;
     text-align: center;
     font-family: sans-serif;
+    margin-top: 10px;
 }

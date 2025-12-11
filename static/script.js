@@ -26,6 +26,7 @@
         oldNewRadios: document.querySelectorAll('input[name="oldnew"]'),
         newPriceStar: document.getElementById('newprice-star'),
         cleanupBtn: document.getElementById('cleanup'),
+        clearhistoryBtn: document.getElementById('clearhistory'),
         prevPrints: document.getElementById('prevprints')
     };
 
@@ -83,6 +84,7 @@
     function handlePriceMode(e) {
         const type = e.target.value;
         safeLocalStorage('set', STORAGE_KEYS.SELECTED_PRICE_TYPE, type);
+        cleanup();
         updateSaleVisibility(type);
     }
 
@@ -97,14 +99,18 @@
         // Validation logic preserved
         if (!oldP && !newP && discountID === '0') return;
         if (oldP && !newP && discountID === '0') return;
+        if (discountID !== '0' && !oldP) return;
+
+        if (oldP && isNaN(oldP)) return;
+        if (newP && isNaN(newP)) return;
+
+        if (oldP == "-0") return;
+        if (newP == "-0") return;
 
         // Auto-calc discount when user enters both prices
         if (oldP && newP && discountID === '0') {
-            discountID = (100 - (newP / oldP) * 100).toFixed(2);
+            discountID = Math.round((100 - (newP / oldP) * 100).toFixed(2));
             document.getElementById("0").value = newP / oldP;
-
-            elements.newPrice.value = '';
-            newP = '';
         }
 
         const entry = { old: oldP, new: newP, discount: discountID };
@@ -122,6 +128,23 @@
 
         fillForm(history[0]);
         elements.printQty.value = 1;
+        
+        const oldP = elements.oldPrice.value;
+        let newP = elements.newPrice.value;
+        const discountRadio = getSelectedRadio('discount');
+        let discountID = discountRadio ? discountRadio.id : '0';
+
+        // Validation logic preserved
+        if (!oldP && !newP && discountID === '0') return;
+        if (oldP && !newP && discountID === '0') return;
+        if (discountID !== '0' && !oldP) return;
+
+        // Auto-calc discount when user enters both prices
+        if (oldP && newP && discountID === '0') {
+            discountID = Math.round((100 - (newP / oldP) * 100).toFixed(2));
+            document.getElementById("0").value = newP / oldP;
+        }
+
         elements.form.submit();
     }
 
@@ -130,6 +153,13 @@
         elements.newPrice.value = '';
         elements.printQty.value = '';
         document.getElementById("0").checked = true;
+    }
+
+    function clearHistory() {
+        safeLocalStorage('set', STORAGE_KEYS.PRICE_HISTORY, JSON.stringify([]));
+        const recentContainer = document.getElementById('recentContainer');
+        if (recentContainer) recentContainer.remove();
+        renderHistory();
     }
 
     // -----------------------------
@@ -246,6 +276,8 @@
         elements.form.addEventListener('submit', handleSubmit);
         elements.reprintBtn.addEventListener('click', handleReprint);
         elements.cleanupBtn.addEventListener('click', cleanup);
+        elements.clearhistoryBtn.addEventListener('click', clearHistory);
+        
 
         elements.priceButtons.addEventListener('click', handlePriceClick);
 

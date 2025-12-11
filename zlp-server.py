@@ -8,7 +8,8 @@ from flask import Flask, render_template, request, jsonify
 
 # MARK: SETUP
 # Application paths
-APP_FOLDER = os.path.join(os.path.expanduser("~"), "Documents", "Zebra Label Printer")
+USER = os.getenv("USERNAME")
+APP_FOLDER = f"C:\\Users\\{USER}\\Zebra Label Printer"
 CONFIG_FILE = os.path.join(APP_FOLDER, "gui_config.json")
 
 def resource_path(relative_path):

@@ -19,8 +19,9 @@ import qrcode
 # ---------------------------------------
 # MARK: CONFIG
 # ---------------------------------------
-APP_FOLDER = os.path.join(os.path.expanduser("~"), "Documents", "Zebra Label Printer")
-os.makedirs(APP_FOLDER, exist_ok=True)
+CURRENT_PROGRAM_VERSION = "1.0.0"
+USER = os.getenv("USERNAME")
+APP_FOLDER = f"C:\\Users\\{USER}\\Zebra Label Printer"
 print(f"App folder ensured at: {APP_FOLDER}")
 
 CONFIG_FILE = os.path.join(APP_FOLDER, "gui_config.json")
@@ -64,17 +65,14 @@ def resource_path(relative_path):
     return os.path.join(base, relative_path)
 
 def get_server_path():
-    try:
-        base = sys._MEIPASS
-        print(f"Base path (frozen): {base}")
-    except:
-        base = os.path.abspath(".")
-        print(f"Base path: {base}")
+    APP_FOLDER = f"C:\\Users\\{USER}\\Zebra Label Printer\\zlp-server.exe"
     
     if "--dev" in sys.argv:
         print("Development mode detected.")
-        return os.path.join(base, "zebra-server.py")
-    return os.path.join(base, "zebra-server.exe")
+        base = os.path.abspath(".")
+        return os.path.join(base, "zlp-server.py")
+    
+    return APP_FOLDER
 
 def kill_all_servers():
     cfg = load_config()
@@ -89,32 +87,74 @@ def kill_all_servers():
 def server_running():
     for proc in psutil.process_iter(["name"]):
         if proc.info["name"]:
-            if proc.info["name"].lower() == "zebra-server.exe":
+            if proc.info["name"].lower() == "zlp-server.exe":
                 return True
             if "--dev" in sys.argv:
                 if proc.info["name"].lower() in ["python.exe", "python3.exe", "python"]:
                     try:
                         # Accessing cmdline can race if the process exits; handle gracefully.
                         for cmd in proc.cmdline():
-                            if "zebra-server.py" in cmd:
+                            if "zlp-server.py" in cmd:
                                 return True
                     except (psutil.AccessDenied, psutil.NoSuchProcess, psutil.ZombieProcess):
                         # Process disappeared or denied; just skip this one.
                         continue
     return False
 
+def check_for_updates():
+    try:
+        response = requests.get("https://api.github.com/repos/TMarccci/Zebra-Label-Printer/releases/latest", timeout=20)
+        if response.status_code == 200:
+            latest = response.json().get("tag_name", "")
+            if latest != CURRENT_PROGRAM_VERSION:
+                QMessageBox.question(None, "Update Available",
+                    f"A new version is available: {latest}\nYou are using: {CURRENT_PROGRAM_VERSION}\n\nDo you want to launch the updater now?",
+                    QMessageBox.Yes | QMessageBox.No
+                )   == QMessageBox.Yes and launch_updater()
+            elif latest == CURRENT_PROGRAM_VERSION:
+                QMessageBox.information(None, "Up to Date",
+                    f"You are using the latest version: {CURRENT_PROGRAM_VERSION}",
+                )
+            else:
+                QMessageBox.warning(None, "Update Check Failed",
+                    "Looks like you have a newer version than the latest release.",
+                )
+        else:
+            print(f"Update check failed: HTTP {response.status_code}")            
+
+    except Exception as e:
+        print(f"Update check failed: {e}")
+        
+def launch_updater():
+    if "--dev" in sys.argv:
+        QMessageBox.information(None, "Development Mode",
+            "You are running in development mode. Update is disabled.",
+        )
+        return
+    
+    updater_path = APP_FOLDER + "\\zlp-updater.exe"
+    print(f"Launching updater: {updater_path}")
+    
+    try:
+        subprocess.Popen([updater_path])
+        print("Updater launched.")
+            
+        # Stop server if running and exit GUI
+        kill_all_servers()
+        QApplication.instance().quit()
+    except Exception as e:
+        QMessageBox.critical(None, "Updater Launch Failed", str(e))
 
 # ---------------------------------------
 # MARK: SINGLE INSTANCE
 # ---------------------------------------
 def check_single_instance():
     server = QLocalServer()
-    if not server.listen("label_printer_gui_single_instance"):
+    if not server.listen("zlp_gui_single_instance"):
         print("Another instance is already running.")
         QMessageBox.warning(None, "Already Running", "Another instance of the GUI is already running.")
         return False
     return True
-
 
 # ---------------------------------------
 # MARK: GUI
@@ -149,9 +189,11 @@ class ControlGUI(QWidget):
         # Add MenuBar
         menubar = QMenuBar(self)
         file_menu = menubar.addMenu("File")
+        file_menu.addAction("Check for Updates", check_for_updates)
+        file_menu.addSeparator()
         file_menu.addAction("Exit", self.close)
         help_menu = menubar.addMenu("Help")
-        help_menu.addAction("About", lambda: QMessageBox.information(self, "About", "Zebra Label Printer<br>Version 1.0<br><br>Made with ❤️ by Marcell Tihanyi" +
+        help_menu.addAction("About", lambda: QMessageBox.information(self, "About", f"Zebra Label Printer<br>Version {CURRENT_PROGRAM_VERSION}<br><br>Made with ❤️ by Marcell Tihanyi" +
             "<br><br><a href='https://tmarccci.hu'>tmarccci.hu</a>" +
             " | <a href='https://github.com/TMarccci'>GitHub</a>"),)
         layout.setMenuBar(menubar)
@@ -331,7 +373,7 @@ class ControlGUI(QWidget):
     # ---------------------------------------
     def update_status(self):
         if server_running():
-            self.status_label.setText("✔ Server Running")
+            self.status_label.setText("🟢 Server Running")
         else:
             self.status_label.setText("🔴 Server Stopped")
 

@@ -68,3 +68,9 @@ total.txt
 qrcode_temp.png
 *.pyc
 __pycache__/
+
+# Signing keys
+codesign.crt
+codesign.key
+codesign.pfx
+app-signer.bat
