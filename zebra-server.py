@@ -89,17 +89,16 @@ def send_zpl(printer_ip: str, printer_port: int, zpl_code: bytes):
     except Exception as e:
         print(f"Failed to send ZPL code: {e}")
 
-def log(msg, success=True):
+def log(msg, success: bool):
     timestamp = time.strftime('%Y-%m-%d %H:%M:%S')
-    entry = f"{timestamp} - {msg}"
+    entry = f"{timestamp} - {'Error: ' if success == False else ''}{msg}"
     print(entry)
 
     log_file = os.path.join(APP_FOLDER, "log.txt")
-    total_file = os.path.join(APP_FOLDER, "total.txt")
 
     with open(log_file, "a", encoding="utf-8") as f:
         f.write(entry + "\n")
-
+        
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "GET":
@@ -119,19 +118,17 @@ def index():
         return render_template("index.html", customConfig=customConfig)
 
     if old and disc:
-        old_f = float(old)
-        new_calc = old_f * float(disc)
         send_zpl(printer_ip, printer_port, generate_label("sale", f"{top_text}", bottom_text=f"{bottom_text}", qty=qty, discount=f"{discount_text}"))      
-        log(f"Printed sale: {old} {currency} -> {new_calc} {currency}", True)
+        log(f"Printed sale: {top_text} -> {bottom_text} | {discount_text}", True)
         return render_template("index.html", customConfig=customConfig)
 
     if not old:
         send_zpl(printer_ip, printer_port, generate_label("normal", f"{top_text}", qty=qty))
-        log(f"Printed normal: {new} {currency}", True)
+        log(f"Printed normal: {top_text}", True)
         return render_template("index.html", customConfig=customConfig)
 
     send_zpl(printer_ip, printer_port, generate_label("sale", f"{top_text}", bottom_text=f"{bottom_text}", qty=qty, discount=f"{discount_text}"))
-    log(f"Printed sale: {old} {currency} -> {new} {currency}", True)
+    log(f"Printed sale: {top_text} -> {bottom_text} | {discount_text}", True)
     return render_template("index.html", customConfig=customConfig)
 
 @app.route('/stop', methods=['GET'])

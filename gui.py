@@ -85,10 +85,12 @@ def server_running():
             if "--dev" in sys.argv:
                 if proc.info["name"].lower() in ["python.exe", "python3.exe", "python"]:
                     try:
+                        # Accessing cmdline can race if the process exits; handle gracefully.
                         for cmd in proc.cmdline():
                             if "zebra-server.py" in cmd:
                                 return True
-                    except psutil.AccessDenied:
+                    except (psutil.AccessDenied, psutil.NoSuchProcess, psutil.ZombieProcess):
+                        # Process disappeared or denied; just skip this one.
                         continue
     return False
 
