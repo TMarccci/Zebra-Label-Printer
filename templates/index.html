@@ -49,7 +49,7 @@
                                 <label for="oldprice" class="input-group-text">
                                     OLD PRICE <span class="text-danger">*</span>
                                 </label>
-                                <input type="number" class="form-control" id="oldprice" name="oldprice" step="1" min="0">
+                                <input type="float" class="form-control" id="oldprice" name="oldprice" min="0">
                                 <span class="input-group-text">{{ customConfig.currency }}</span>
                             </div>
                         </div>
@@ -113,41 +113,94 @@
 
             </div>
 
-            <!-- RIGHT SIDE PRICING GRID -->
+            <!-- PRICE SUGGESTIONS -->
             <div class="col-12 col-md-8 mb-3">
                 <div class="table-responsive mx-auto">
                     <table id="price-buttons" class="table table-hover text-center align-middle table-transparent">
                         <tbody>
-                            {% for i in range(2, 100, 3) %}
-							<tr class="border-none">
-								{% for offset in [0, 0, 1, 1, 2, 2] %}
-									{% set base = (i + offset) * 1000 %}
-									{% set value = base + (490 if loop.index is not even else 990) %}
-									{% if customConfig.show_decimals %}
-										{% set display_value = ("{0:.{1}f}".format(value, customConfig.decimal_places)) %}
-									{% else %}
-										{% set display_value = value | round | int %}
-									{% endif %}
-									<td>
-										<button type="button" class="btn btn-outline-light bg-light text-dark price text-nowrap"
-											data-price="{{ value }}">
-											{{ display_value }} {{ customConfig.currency }}
-										</button>
-									</td>
-								{% endfor %}
-							</tr>
+                            {% if customConfig.price_suggestion_type == "Hungary" %}
+                                {% for i in range(2, 100, 3) %}
+                                <tr class="border-none">
+                                    {% for offset in [0, 0, 1, 1, 2, 2] %}
+                                        {% set base = (i + offset) * 1000 %}
+                                        {% set value = base + (490 if loop.index is not even else 990) %}
+                                        {% if customConfig.show_decimals %}
+                                            {% set display_value = ("{0:.{1}f}".format(value, customConfig.decimal_places)) %}
+                                        {% else %}
+                                            {% set display_value = value | round | int %}
+                                        {% endif %}
+                                        <td>
+                                            <button type="button" class="btn btn-outline-light bg-light text-dark price text-nowrap"
+                                                data-price="{{ value }}">
+                                                {{ display_value }} {{ customConfig.currency }}
+                                            </button>
+                                        </td>
+                                    {% endfor %}
+                                </tr>
 
-							{% if loop.index % 3 == 0 and not loop.last %}
-							<tr class="border-none">
-								<td colspan="6"><hr class="my-2"></td>
-							</tr>
-							{% endif %}
-							{% endfor %}
+                                {% if loop.index % 3 == 0 and not loop.last %}
+                                <tr class="border-none">
+                                    <td colspan="6"><hr class="my-2"></td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            {% elif customConfig.price_suggestion_type == "Poland" %}
+                                {% for i in range(1, 103, 2) %}
+                                <tr class="border-none">
+                                    {% for offset in [0, 1, 2, 3, 4, 5] %}
+                                        {% set base = (i + offset) * 10 %}
+                                        {% set value = base + 9.9 %}
+                                        {% if customConfig.show_decimals %}
+                                            {% set display_value = ("{0:.{1}f}".format(value, customConfig.decimal_places)) %}
+                                        {% else %}
+                                            {% set display_value = value | round | int %}
+                                        {% endif %}
+                                        <td>
+                                            <button type="button" class="btn btn-outline-light bg-light text-dark price text-nowrap"
+                                                data-price="{{ value }}">
+                                                {{ display_value }} {{ customConfig.currency }}
+                                            </button>
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+
+                                {% if loop.index % 3 == 0 and not loop.last %}
+                                <tr class="border-none">
+                                    <td colspan="6"><hr class="my-2"></td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            {% elif customConfig.price_suggestion_type == "Czech" %}
+                                {% for i in range(2, 100, 3) %}
+                                <tr class="border-none">
+                                    {% for offset in [0, 0, 1, 1, 2, 2] %}
+                                        {% set base = (i + offset) * 100 %}
+                                        {% set value = base + (49 if loop.index is not even else 99) %}
+                                        {% if customConfig.show_decimals %}
+                                            {% set display_value = ("{0:.{1}f}".format(value, customConfig.decimal_places)) %}
+                                        {% else %}
+                                            {% set display_value = value | round | int %}
+                                        {% endif %}
+                                        <td>
+                                            <button type="button" class="btn btn-outline-light bg-light text-dark price text-nowrap"
+                                                data-price="{{ value }}">
+                                                {{ display_value }} {{ customConfig.currency }}
+                                            </button>
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+
+                                {% if loop.index % 3 == 0 and not loop.last %}
+                                <tr class="border-none">
+                                    <td colspan="6"><hr class="my-2"></td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            {% endif %}
                         </tbody>
                     </table>
                 </div>
             </div>
-
         </div>
     </div>
 	

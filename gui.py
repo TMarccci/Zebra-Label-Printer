@@ -6,7 +6,8 @@ import webbrowser
 import json
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
-    QLineEdit, QPushButton, QMessageBox, QCheckBox, QSpinBox
+    QLineEdit, QPushButton, QMessageBox, QCheckBox, QSpinBox,
+    QRadioButton
 )
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QIcon, QPixmap
@@ -30,6 +31,7 @@ DEFAULT_CONFIG = {
     "currency": "HUF",
     "show_decimals": False,
     "decimal_places": 2,
+    "price_suggestion_type": "Hungary",
     "start_server_on_launch": False
 }
 
@@ -134,10 +136,21 @@ class ControlGUI(QWidget):
         self.status_label.setStyleSheet("font-size: 16px")
         layout.addWidget(self.status_label)
 
+        layout.addSpacing(20)
+
+        layout.addWidget(QLabel("Server Settings:"))
         layout.addLayout(self._row("Webserver Port:", "server_port"))
         layout.addLayout(self._row("Printer IP:", "printer_ip"))
         layout.addLayout(self._row("Printer Port:", "printer_port"))
-        layout.addLayout(self._row("Currency:", "currency"))
+        self.autostart_checkbox = QCheckBox("Start server on launch")
+        self.autostart_checkbox.setChecked(self.config.get("start_server_on_launch"))
+        layout.addWidget(self.autostart_checkbox)
+        
+        layout.addSpacing(20)
+        
+        layout.addWidget(QLabel("Currency Settings:"))
+        layout.addLayout(self._radio_row("Price Suggestion Type:", ["Hungary", "Poland", "Czech"], "price_suggestion_type"))
+        layout.addLayout(self._row("Visible Currency:", "currency"))
 
         # decimal settings
         hl = QHBoxLayout()
@@ -150,12 +163,12 @@ class ControlGUI(QWidget):
         self.decimals_spin.setValue(self.config["decimal_places"])
         hl.addWidget(self.decimals_spin)
         layout.addLayout(hl)
-
-        self.autostart_checkbox = QCheckBox("Start server on launch")
-        self.autostart_checkbox.setChecked(self.config.get("start_server_on_launch"))
-        layout.addWidget(self.autostart_checkbox)
+        
+        layout.addSpacing(20)
 
         layout.addWidget(self.button("Save Settings", "save_btn"))
+        
+        layout.addSpacing(30)
 
         hl2 = QHBoxLayout()
         hl2.addWidget(self.button("Start Server", "start_btn"))
@@ -175,6 +188,21 @@ class ControlGUI(QWidget):
         field = QLineEdit(self.config[cfg_key])
         setattr(self, f"{cfg_key}_input", field)
         hl.addWidget(field)
+        return hl
+    
+    def _radio_row(self, label, options, cfg_key):
+        hl = QHBoxLayout()
+        hl.addWidget(QLabel(label))
+        # Radio buttons would go here
+        radios = []
+        for opt in options:
+            rb = QRadioButton(opt)
+            if self.config[cfg_key] == opt:
+                rb.setChecked(True)
+            radios.append(rb)
+            hl.addWidget(rb)
+        setattr(self, f"{cfg_key}_radios", radios)
+        
         return hl
 
     def button(self, text, attr):
@@ -259,6 +287,9 @@ class ControlGUI(QWidget):
             "currency": self.currency_input.text(),
             "show_decimals": self.decimals_checkbox.isChecked(),
             "decimal_places": self.decimals_spin.value(),
+            "price_suggestion_type": next(
+                (rb.text() for rb in self.price_suggestion_type_radios if rb.isChecked()), "Hungary"
+            ),
             "start_server_on_launch": self.autostart_checkbox.isChecked()
         }
         save_config(cfg)

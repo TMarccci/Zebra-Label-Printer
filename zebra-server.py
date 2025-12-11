@@ -34,13 +34,15 @@ printer_ip = cfg.get("printer_ip", "127.0.0.1")
 printer_port = int(cfg.get("printer_port", 9100))
 show_decimals = cfg.get("show_decimals", False)
 decimal_places = cfg.get("decimal_places", 2)
+price_suggestion_type = cfg.get("price_suggestion_type", "Hungary")
 
 customConfig = {
     'printer_ip': printer_ip,
     'printer_port': printer_port,
     'currency': currency,
     'show_decimals': show_decimals,
-    'decimal_places': decimal_places
+    'decimal_places': decimal_places,
+    'price_suggestion_type': price_suggestion_type
 }
 
 def format_price(value):
@@ -103,10 +105,14 @@ def index():
     if request.method == "GET":
         return render_template("index.html", customConfig=customConfig)
 
-    old = request.form.get("oldprice", "")
+    old = float(request.form.get("oldprice", "")) if request.form.get("oldprice", "") else 0.0
     new = request.form.get("newprice", "")
     disc = request.form.get("discount", "")
     qty = int(request.form.get("printqty", 1) or 1)
+    
+    top_text = f"{format_price(old)} {currency}" if old else f"{format_price(new)} {currency}"
+    bottom_text = f"{format_price(float(old) * float(disc))} {currency}" if old and disc else ""
+    discount_text = f"- {round((1 - float(disc)) * 100)} %" if old and disc else ""
 
     if not old and not new:
         log("Empty submission", False)
@@ -115,16 +121,16 @@ def index():
     if old and disc:
         old_f = float(old)
         new_calc = old_f * float(disc)
-        send_zpl(printer_ip, printer_port, generate_label("sale", f"{old} HUF", bottom_text=f"{int(round(int(old) * float(disc)))} HUF", qty=qty, discount=f"- {round((1 - float(disc))*100)} %"))      
+        send_zpl(printer_ip, printer_port, generate_label("sale", f"{top_text}", bottom_text=f"{bottom_text}", qty=qty, discount=f"{discount_text}"))      
         log(f"Printed sale: {old} {currency} -> {new_calc} {currency}", True)
         return render_template("index.html", customConfig=customConfig)
 
     if not old:
-        send_zpl(printer_ip, printer_port, generate_label("normal", f"{new} HUF", qty=qty))
+        send_zpl(printer_ip, printer_port, generate_label("normal", f"{top_text}", qty=qty))
         log(f"Printed normal: {new} {currency}", True)
         return render_template("index.html", customConfig=customConfig)
 
-    send_zpl(printer_ip, printer_port, generate_label("sale", f"{old} HUF", bottom_text=f"{int(round(int(old) * float(disc)))} HUF", qty=qty, discount=f"- {round((1 - float(disc))*100)} %"))
+    send_zpl(printer_ip, printer_port, generate_label("sale", f"{top_text}", bottom_text=f"{bottom_text}", qty=qty, discount=f"{discount_text}"))
     log(f"Printed sale: {old} {currency} -> {new} {currency}", True)
     return render_template("index.html", customConfig=customConfig)
 
