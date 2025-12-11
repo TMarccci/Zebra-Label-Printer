@@ -145,7 +145,7 @@
                                 {% endif %}
                                 {% endfor %}
                             {% elif customConfig.price_suggestion_type == "Poland" %}
-                                {% for i in range(1, 103, 2) %}
+                                {% for i in range(1, 103, 6) %}
                                 <tr class="border-none">
                                     {% for offset in [0, 1, 2, 3, 4, 5] %}
                                         {% set base = (i + offset) * 10 %}

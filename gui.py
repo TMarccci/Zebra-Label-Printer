@@ -21,6 +21,7 @@ import qrcode
 # ---------------------------------------
 APP_FOLDER = os.path.join(os.path.expanduser("~"), "Documents", "Zebra Label Printer")
 os.makedirs(APP_FOLDER, exist_ok=True)
+print(f"App folder ensured at: {APP_FOLDER}")
 
 CONFIG_FILE = os.path.join(APP_FOLDER, "gui_config.json")
 
@@ -38,13 +39,16 @@ DEFAULT_CONFIG = {
 def load_config():
     if not os.path.exists(CONFIG_FILE):
         save_config(DEFAULT_CONFIG)
+        print("Config file missing. Created default config.")
         return DEFAULT_CONFIG.copy()
     with open(CONFIG_FILE, "r") as f:
+        print("Config loaded!")
         return json.load(f)
 
 def save_config(cfg):
     with open(CONFIG_FILE, "w") as f:
         json.dump(cfg, f, indent=4)
+        print("Config saved!")
 
 
 # ---------------------------------------
@@ -53,23 +57,29 @@ def save_config(cfg):
 def resource_path(relative_path):
     try:
         base = sys._MEIPASS
+        print(f"Base path (frozen): {base}")
     except:
         base = os.path.abspath(".")
+        print(f"Base path: {base}")
     return os.path.join(base, relative_path)
 
 def get_server_path():
     try:
         base = sys._MEIPASS
+        print(f"Base path (frozen): {base}")
     except:
         base = os.path.abspath(".")
+        print(f"Base path: {base}")
     
     if "--dev" in sys.argv:
+        print("Development mode detected.")
         return os.path.join(base, "zebra-server.py")
     return os.path.join(base, "zebra-server.exe")
 
 def kill_all_servers():
     cfg = load_config()
     try:
+        print("Sending stop request to server...")
         requests.get(f"http://127.0.0.1:{cfg.get('server_port')}/stop", timeout=1)
     except requests.exceptions.ConnectionError:
         print("Server stopped.")
@@ -77,7 +87,6 @@ def kill_all_servers():
         print("Server stopped (timeout).")
 
 def server_running():
-    """Check if any zebra-server.exe or zebra-server.py process is alive."""
     for proc in psutil.process_iter(["name"]):
         if proc.info["name"]:
             if proc.info["name"].lower() == "zebra-server.exe":
@@ -101,6 +110,7 @@ def server_running():
 def check_single_instance():
     server = QLocalServer()
     if not server.listen("label_printer_gui_single_instance"):
+        print("Another instance is already running.")
         QMessageBox.warning(None, "Already Running", "Another instance of the GUI is already running.")
         return False
     return True
@@ -128,6 +138,7 @@ class ControlGUI(QWidget):
 
         # Autostart
         if self.config.get("start_server_on_launch", False):
+            print("Autostarting server...")
             QTimer.singleShot(2000, self.start_server)
 
     # UI
@@ -223,6 +234,7 @@ class ControlGUI(QWidget):
     # MARK: QR CODE POPUP
     # ---------------------------------------
     def show_qr(self):
+        print("Generating QR code...")
         port = self.server_port_input.text().strip()
         url = f"http://192.168.137.1:{port}"
 
@@ -310,6 +322,7 @@ class ControlGUI(QWidget):
     # MARK: OPEN WEB
     # ---------------------------------------
     def open_web(self):
+        print("Opening web interface...")
         port = self.server_port_input.text().strip()
         webbrowser.open(f"http://127.0.0.1:{port}")
 
