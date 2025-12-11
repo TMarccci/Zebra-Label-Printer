@@ -152,8 +152,8 @@ class ControlGUI(QWidget):
         file_menu.addAction("Exit", self.close)
         help_menu = menubar.addMenu("Help")
         help_menu.addAction("About", lambda: QMessageBox.information(self, "About", "Zebra Label Printer<br>Version 1.0<br><br>Made with ❤️ by Marcell Tihanyi" +
-                                                                     "<br><br><a href='https://tmarccci.hu'>tmarccci.hu</a>" +
-                                                                     " | <a href='https://github.com/TMarccci'>GitHub</a>"),)
+            "<br><br><a href='https://tmarccci.hu'>tmarccci.hu</a>" +
+            " | <a href='https://github.com/TMarccci'>GitHub</a>"),)
         layout.setMenuBar(menubar)
 
         # Status
