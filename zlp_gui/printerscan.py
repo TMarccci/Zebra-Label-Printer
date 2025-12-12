@@ -45,7 +45,8 @@ class ScannerWorker(QObject):
                     ip = ipaddress.ip_address(addr.address)
                     netmask = ipaddress.ip_address(addr.netmask)
                     network = ipaddress.ip_network(f"{ip}/{netmask}", strict=False)
-                    if network.prefixlen >= 20:
+                    # Only scan reasonably small subnets
+                    if network.prefixlen >= 23:
                         subnets.append(str(network))
 
         if "--dev" in sys.argv:
