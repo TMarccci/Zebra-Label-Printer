@@ -3,8 +3,6 @@ import sys
 import socket
 import json
 import qrcode
-from PyQt5.QtWidgets import QMessageBox, QLabel
-from PyQt5.QtGui import QPixmap
 
 CURRENT_PROGRAM_VERSION = "1.1.0"
 USER = os.getenv("USERNAME")
@@ -30,6 +28,8 @@ def resource_path(relative_path):
     return os.path.join(base, relative_path)
 
 def test_print(ip):
+    from PyQt5.QtWidgets import QMessageBox
+    
     try:
         print(f"Testing print to IP: {ip}")
         sock = socket.create_connection((str(ip), 9100), timeout=1)
@@ -58,6 +58,9 @@ def save_config(cfg):
         print("Config saved!")
         
 def show_qr(self):
+    from PyQt5.QtWidgets import QMessageBox, QLabel
+    from PyQt5.QtGui import QPixmap
+    
     print("Generating QR code...")
     port = self.server_port_input.text().strip()
     url = f"http://192.168.137.1:{port}"

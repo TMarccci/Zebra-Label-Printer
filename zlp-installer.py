@@ -15,7 +15,6 @@ try:
 except Exception:
     pythoncom = None
 import urllib.request
-import sys
 
 from zlp_lib.zlp import resource_path, APP_FOLDER, CURRENT_PROGRAM_VERSION, USER
 
