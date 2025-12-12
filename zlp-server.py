@@ -1,33 +1,13 @@
 import sys
 import os
-import json
 import time
 import socket
 import signal
 from flask import Flask, render_template, request, jsonify
 
+from zlp_lib.zlp import resource_path, load_config as load_cfg, APP_FOLDER
+
 # MARK: SETUP
-# Application paths
-USER = os.getenv("USERNAME")
-APP_FOLDER = f"C:\\Users\\{USER}\\Zebra Label Printer"
-CONFIG_FILE = os.path.join(APP_FOLDER, "gui_config.json")
-
-def resource_path(relative_path):
-    try:
-        base_path = sys._MEIPASS
-    except AttributeError:
-        base_path = os.path.abspath(".")
-    return os.path.join(base_path, relative_path)
-
-# Load configuration
-def load_cfg():
-    if not os.path.exists(CONFIG_FILE):
-        print("ERROR: Config file missing.")
-        return {}
-    with open(CONFIG_FILE, "r") as f:
-        print("Config loaded!")
-        return json.load(f)
-
 cfg = load_cfg()
 currency = cfg.get("currency", "HUF")
 printer_ip = cfg.get("printer_ip", "127.0.0.1")
