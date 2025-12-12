@@ -127,7 +127,7 @@ class ZebraLabelPrinterInstaller:
             self._log(f"Creating install directory: {self.install_path}")
             os.makedirs(self.install_path, exist_ok=True)
 
-            files = ["Zebra-Label-Printer.exe", "zlp-server.exe", "zlp-updater.exe"]
+            files = ["Zebra-Label-Printer.exe", "zlp-server.exe", "zlp-updater.exe", "zlp-uninstaller.exe"]
             api_url = "https://api.github.com/repos/TMarccci/Zebra-Label-Printer/releases/latest"
 
             self._log("Fetching latest release info from GitHub...")
