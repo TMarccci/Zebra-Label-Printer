@@ -3,67 +3,23 @@ import os
 import subprocess
 import psutil
 import webbrowser
-import json
+import requests
+from PyQt5.QtCore import QTimer
+from PyQt5.QtGui import QIcon
+from PyQt5.QtNetwork import QLocalServer, QLocalSocket
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QMessageBox, QCheckBox, QSpinBox,
-    QRadioButton, QMenuBar
+    QRadioButton, QMenuBar, QVBoxLayout
 )
-from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon, QPixmap
-from PyQt5.QtNetwork import QLocalServer
-import requests
-import qrcode
 
-
-# ---------------------------------------
-# MARK: CONFIG
-# ---------------------------------------
-CURRENT_PROGRAM_VERSION = "1.0.0"
-USER = os.getenv("USERNAME")
-APP_FOLDER = f"C:\\Users\\{USER}\\Zebra Label Printer"
-print(f"App folder ensured at: {APP_FOLDER}")
-
-CONFIG_FILE = os.path.join(APP_FOLDER, "gui_config.json")
-
-DEFAULT_CONFIG = {
-    "server_port": "5000",
-    "printer_ip": "172.19.81.218",
-    "printer_port": "9100",
-    "currency": "HUF",
-    "show_decimals": False,
-    "decimal_places": 2,
-    "price_suggestion_type": "Hungary",
-    "start_server_on_launch": False
-}
-
-def load_config():
-    if not os.path.exists(CONFIG_FILE):
-        save_config(DEFAULT_CONFIG)
-        print("Config file missing. Created default config.")
-        return DEFAULT_CONFIG.copy()
-    with open(CONFIG_FILE, "r") as f:
-        print("Config loaded!")
-        return json.load(f)
-
-def save_config(cfg):
-    with open(CONFIG_FILE, "w") as f:
-        json.dump(cfg, f, indent=4)
-        print("Config saved!")
-
+from zlp_lib.zlp import resource_path, load_config, save_config, show_qr, CURRENT_PROGRAM_VERSION, APP_FOLDER, USER
+from zlp_gui.printerscan import PrinterScanFlow
+from zlp_gui.update import CheckforUpdate
 
 # ---------------------------------------
 # MARK: HELPERS
 # ---------------------------------------
-def resource_path(relative_path):
-    try:
-        base = sys._MEIPASS
-        print(f"Base path (frozen): {base}")
-    except:
-        base = os.path.abspath(".")
-        print(f"Base path: {base}")
-    return os.path.join(base, relative_path)
-
 def get_server_path():
     APP_FOLDER = f"C:\\Users\\{USER}\\Zebra Label Printer\\zlp-server.exe"
     
@@ -101,60 +57,35 @@ def server_running():
                         continue
     return False
 
-def check_for_updates():
-    try:
-        response = requests.get("https://api.github.com/repos/TMarccci/Zebra-Label-Printer/releases/latest", timeout=20)
-        if response.status_code == 200:
-            latest = response.json().get("tag_name", "")
-            if latest != CURRENT_PROGRAM_VERSION:
-                QMessageBox.question(None, "Update Available",
-                    f"A new version is available: {latest}\nYou are using: {CURRENT_PROGRAM_VERSION}\n\nDo you want to launch the updater now?",
-                    QMessageBox.Yes | QMessageBox.No
-                )   == QMessageBox.Yes and launch_updater()
-            elif latest == CURRENT_PROGRAM_VERSION:
-                QMessageBox.information(None, "Up to Date",
-                    f"You are using the latest version: {CURRENT_PROGRAM_VERSION}",
-                )
-            else:
-                QMessageBox.warning(None, "Update Check Failed",
-                    "Looks like you have a newer version than the latest release.",
-                )
-        else:
-            print(f"Update check failed: HTTP {response.status_code}")            
-
-    except Exception as e:
-        print(f"Update check failed: {e}")
-        
-def launch_updater():
-    if "--dev" in sys.argv:
-        QMessageBox.information(None, "Development Mode",
-            "You are running in development mode. Update is disabled.",
-        )
-        return
-    
-    updater_path = APP_FOLDER + "\\zlp-updater.exe"
-    print(f"Launching updater: {updater_path}")
-    
-    try:
-        subprocess.Popen([updater_path])
-        print("Updater launched.")
-            
-        # Stop server if running and exit GUI
-        kill_all_servers()
-        QApplication.instance().quit()
-    except Exception as e:
-        QMessageBox.critical(None, "Updater Launch Failed", str(e))
-
 # ---------------------------------------
 # MARK: SINGLE INSTANCE
 # ---------------------------------------
-def check_single_instance():
-    server = QLocalServer()
-    if not server.listen("zlp_gui_single_instance"):
-        print("Another instance is already running.")
+def ensure_single_instance(app):
+    name = "zlp_gui_single_instance"
+
+    # Try connecting to an existing server; if successful, another instance is running
+    socket = QLocalSocket()
+    socket.connectToServer(name)
+    if socket.waitForConnected(100):
         QMessageBox.warning(None, "Already Running", "Another instance of the GUI is already running.")
-        return False
-    return True
+        socket.close()
+        return None
+    socket.close()
+
+    # Clean up any stale server (e.g., leftover after crash) and listen
+    try:
+        QLocalServer.removeServer(name)
+    except Exception:
+        pass
+
+    server = QLocalServer()
+    if not server.listen(name):
+        QMessageBox.warning(None, "Already Running", "Another instance of the GUI is already running.")
+        return None
+
+    # Keep a strong reference so it isn't garbage-collected
+    app._single_instance_server = server
+    return server
 
 # ---------------------------------------
 # MARK: GUI
@@ -189,7 +120,7 @@ class ControlGUI(QWidget):
         # Add MenuBar
         menubar = QMenuBar(self)
         file_menu = menubar.addMenu("File")
-        file_menu.addAction("Check for Updates", check_for_updates)
+        file_menu.addAction("Check for Updates", self.check_for_updates)
         file_menu.addSeparator()
         file_menu.addAction("Exit", self.close)
         help_menu = menubar.addMenu("Help")
@@ -208,7 +139,12 @@ class ControlGUI(QWidget):
         # Server settings
         layout.addWidget(QLabel("Server Settings:"))
         layout.addLayout(self._row("Webserver Port:", "server_port"))
-        layout.addLayout(self._row("Printer IP:", "printer_ip"))
+        hl = QHBoxLayout()
+        hl.addWidget(QLabel("Printer IP:"))
+        self.printer_ip_input = QLineEdit(self.config["printer_ip"])
+        hl.addWidget(self.printer_ip_input)
+        hl.addWidget(self.button("Find Printers", "find_printers_btn"))
+        layout.addLayout(hl)        
         layout.addLayout(self._row("Printer Port:", "printer_port"))
         self.autostart_checkbox = QCheckBox("Start server on launch")
         self.autostart_checkbox.setChecked(self.config.get("start_server_on_launch"))
@@ -287,35 +223,8 @@ class ControlGUI(QWidget):
         self.stop_btn.clicked.connect(self.stop_server)
         self.save_btn.clicked.connect(self.save_settings)
         self.open_web_btn.clicked.connect(self.open_web)
-        self.qr_btn.clicked.connect(self.show_qr)
-
-    # ---------------------------------------
-    # MARK: QR CODE POPUP
-    # ---------------------------------------
-    def show_qr(self):
-        print("Generating QR code...")
-        port = self.server_port_input.text().strip()
-        url = f"http://192.168.137.1:{port}"
-
-        # Generate QR
-        qr = qrcode.QRCode(box_size=6, border=2)
-        qr.add_data(url)
-        qr.make()
-        img = qr.make_image(fill_color="black", back_color="white")
-
-        temp_path = os.path.join(APP_FOLDER, "qrcode_temp.png")
-        img.save(temp_path)
-
-        msg = QMessageBox(self)
-        msg.setWindowTitle("QR Code")
-        msg.setIcon(QMessageBox.Information)
-
-        qr_label = QLabel()
-        pix = QPixmap(temp_path)
-        qr_label.setPixmap(pix)
-
-        msg.layout().addWidget(qr_label, 1, 1)
-        msg.exec_()
+        self.qr_btn.clicked.connect(lambda: show_qr(self))
+        self.find_printers_btn.clicked.connect(self.find_zebra_printers)
 
     # ---------------------------------------
     # MARK: SERVER CONTROL
@@ -339,6 +248,7 @@ class ControlGUI(QWidget):
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL
                     )
+                print(f"Server started on port {port} with PID {self.server_process.pid}")
             except Exception as e:
                 QMessageBox.critical(self, "Start Error", str(e))
         else:
@@ -350,8 +260,18 @@ class ControlGUI(QWidget):
         self.update_status()
 
     # ---------------------------------------
-    # MARK: SETTINGS
+    # MARK: FUNCTIONS
     # ---------------------------------------
+    def update_status(self):
+        if server_running():
+            self.status_label.setText("🟢 Server Running")
+        else:
+            self.status_label.setText("🔴 Server Stopped")
+    
+    def find_zebra_printers(self):
+        flow = PrinterScanFlow()
+        flow.start_scan(self)
+        
     def save_settings(self):
         cfg = {
             "server_port": self.server_port_input.text(),
@@ -367,32 +287,21 @@ class ControlGUI(QWidget):
         }
         save_config(cfg)
         QMessageBox.information(self, "Saved", "Settings saved.")
-
-    # ---------------------------------------
-    # MARK: STATUS
-    # ---------------------------------------
-    def update_status(self):
-        if server_running():
-            self.status_label.setText("🟢 Server Running")
-        else:
-            self.status_label.setText("🔴 Server Stopped")
-
-    # ---------------------------------------
-    # MARK: OPEN WEB
-    # ---------------------------------------
+        
     def open_web(self):
         print("Opening web interface...")
         port = self.server_port_input.text().strip()
         webbrowser.open(f"http://127.0.0.1:{port}")
-
-    # ---------------------------------------
-    # MARK: EXIT
-    # ---------------------------------------
+        
+    def check_for_updates(self):       
+        if not hasattr(self, "update_checker") or self.update_checker is None:
+            self.update_checker = CheckforUpdate()
+        self.update_checker.start_check(self)
+        
     def closeEvent(self, ev):
         kill_all_servers()
         QTimer.singleShot(200, QApplication.instance().quit)
         ev.ignore()
-
 
 # ---------------------------------------
 # MARK: ENTRY
@@ -401,7 +310,8 @@ def run_gui():
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon(resource_path("static/icon.ico")))
 
-    if not check_single_instance():
+    # Prevent launching if another instance is already running
+    if ensure_single_instance(app) is None:
         sys.exit(0)
 
     gui = ControlGUI()
