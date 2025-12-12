@@ -6,7 +6,7 @@ import qrcode
 from PyQt5.QtWidgets import QMessageBox, QLabel
 from PyQt5.QtGui import QPixmap
 
-CURRENT_PROGRAM_VERSION = "1.0.0"
+CURRENT_PROGRAM_VERSION = "1.1.0"
 USER = os.getenv("USERNAME")
 APP_FOLDER = f"C:\\Users\\{USER}\\Zebra Label Printer"
 CONFIG_FILE = os.path.join(APP_FOLDER, "gui_config.json")
