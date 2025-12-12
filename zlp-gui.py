@@ -10,10 +10,10 @@ from PyQt5.QtNetwork import QLocalServer, QLocalSocket
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QMessageBox, QCheckBox, QSpinBox,
-    QRadioButton, QMenuBar, QVBoxLayout
+    QRadioButton, QMenuBar, QVBoxLayout, QGroupBox, QFormLayout, QSpacerItem, QSizePolicy
 )
 
-from zlp_lib.zlp import resource_path, load_config, save_config, show_qr, CURRENT_PROGRAM_VERSION, APP_FOLDER, USER
+from zlp_lib.zlp import resource_path, load_config, save_config, show_qr, test_print, CURRENT_PROGRAM_VERSION, APP_FOLDER, USER
 from zlp_gui.printerscan import PrinterScanFlow
 from zlp_gui.update import CheckforUpdate
 
@@ -94,11 +94,13 @@ class ControlGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Zebra Label Printer")
-        self.resize(350, 500)
+        self.resize(500, 640)
         self.setFixedSize(self.size())
 
         self.server_process = None
         self.config = load_config()
+        self.help_window = None
+        self.dirty = False
 
         self.setup_ui()
         self.connect_signals()
@@ -116,6 +118,18 @@ class ControlGUI(QWidget):
     # UI
     def setup_ui(self):
         layout = QVBoxLayout()
+        # High-contrast, larger UI for readability
+        self.setStyleSheet(
+            """
+            QWidget { font-size: 13px; }
+            QLabel { font-size: 14px; }
+            QGroupBox { font-size: 15px; font-weight: bold; margin-top: 12px; }
+            QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 4px 6px; }
+            QPushButton { font-size: 14px; padding: 8px 12px; }
+            QLineEdit, QSpinBox { font-size: 14px; padding: 6px; }
+            QRadioButton, QCheckBox { font-size: 14px; }
+            """
+        )
         
         # Add MenuBar
         menubar = QMenuBar(self)
@@ -124,68 +138,108 @@ class ControlGUI(QWidget):
         file_menu.addSeparator()
         file_menu.addAction("Exit", self.close)
         help_menu = menubar.addMenu("Help")
+        help_menu.addAction("Quick Guide", self.show_help)
         help_menu.addAction("About", lambda: QMessageBox.information(self, "About", f"Zebra Label Printer<br>Version {CURRENT_PROGRAM_VERSION}<br><br>Made with ❤️ by Marcell Tihanyi" +
             "<br><br><a href='https://tmarccci.hu'>tmarccci.hu</a>" +
             " | <a href='https://github.com/TMarccci'>GitHub</a>"),)
         layout.setMenuBar(menubar)
 
         # Status
-        self.status_label = QLabel("🔴 Server Stopped")
+        self.status_label = QLabel("✖️ Server Stopped")
         self.status_label.setStyleSheet("font-size: 16px")
         layout.addWidget(self.status_label)
 
-        layout.addSpacing(20)
+        # Unsaved changes indicator
+        self.unsaved_label = QLabel("")
+        self.unsaved_label.setStyleSheet("color:#b33; font-weight:bold")
+        layout.addWidget(self.unsaved_label)
 
-        # Server settings
-        layout.addWidget(QLabel("Server Settings:"))
-        layout.addLayout(self._row("Webserver Port:", "server_port"))
-        hl = QHBoxLayout()
-        hl.addWidget(QLabel("Printer IP:"))
+        layout.addSpacing(8)
+
+        # Server settings group
+        server_box = QGroupBox("Server Settings")
+        server_form = QFormLayout()
+        self.server_port_input = QLineEdit(self.config["server_port"])
+        self.server_port_input.setToolTip("Port number for the built-in web interface")
+        server_form.addRow("Webserver Port:", self.server_port_input)
+
+        ip_row = QHBoxLayout()
         self.printer_ip_input = QLineEdit(self.config["printer_ip"])
-        hl.addWidget(self.printer_ip_input)
-        hl.addWidget(self.button("Find Printers", "find_printers_btn"))
-        layout.addLayout(hl)        
-        layout.addLayout(self._row("Printer Port:", "printer_port"))
+        self.printer_ip_input.setToolTip("Printer IP address (e.g. 192.168.1.100)")
+        ip_row.addWidget(self.printer_ip_input)
+        self.find_printers_btn = QPushButton("Find Printers")
+        self.find_printers_btn.setToolTip("Scan the network for compatible printers")
+        ip_row.addWidget(self.find_printers_btn)
+        self.test_printer_btn = QPushButton("Test Printer")
+        self.test_printer_btn.setToolTip("Try connecting to the printer on port 9100")
+        ip_row.addWidget(self.test_printer_btn)
+        server_form.addRow(QLabel("Printer IP:"), ip_row)
+
+        self.printer_port_input = QLineEdit(self.config["printer_port"])
+        self.printer_port_input.setToolTip("Usually 9100 for Zebra printers")
+        server_form.addRow("Printer Port:", self.printer_port_input)
+
         self.autostart_checkbox = QCheckBox("Start server on launch")
         self.autostart_checkbox.setChecked(self.config.get("start_server_on_launch"))
-        layout.addWidget(self.autostart_checkbox)
+        self.autostart_checkbox.setToolTip("Automatically start the web server when the app opens")
+        server_form.addRow(self.autostart_checkbox)
+        server_box.setLayout(server_form)
+        layout.addWidget(server_box)
         
-        layout.addSpacing(20)
+        layout.addSpacing(8)
         
-        # Currency settings
-        layout.addWidget(QLabel("Currency Settings:"))
-        layout.addLayout(self._radio_row("Price Suggestion Type:", ["Hungary", "Poland", "Czech"], "price_suggestion_type"))
-        layout.addLayout(self._row("Visible Currency:", "currency"))
+        # Currency settings group
+        currency_box = QGroupBox("Currency Settings")
+        currency_layout = QVBoxLayout()
+        currency_layout.addLayout(self._radio_row("Price Suggestion Type:", ["Hungary", "Poland", "Czech"], "price_suggestion_type"))
+        currency_layout.addLayout(self._row("Visible Currency:", "currency"))
 
         hl = QHBoxLayout()
         self.decimals_checkbox = QCheckBox("Show decimals")
         self.decimals_checkbox.setChecked(self.config["show_decimals"])
+        self.decimals_checkbox.setToolTip("Turn on to show decimal places in prices")
         hl.addWidget(self.decimals_checkbox)
 
         self.decimals_spin = QSpinBox()
         self.decimals_spin.setRange(0, 4)
         self.decimals_spin.setValue(self.config["decimal_places"])
+        self.decimals_spin.setToolTip("How many decimals to show when enabled")
         hl.addWidget(self.decimals_spin)
-        layout.addLayout(hl)
+        currency_layout.addLayout(hl)
+        currency_box.setLayout(currency_layout)
+        layout.addWidget(currency_box)
         
-        layout.addSpacing(20)
+        layout.addSpacing(8)
 
         layout.addWidget(self.button("Save Settings", "save_btn"))
         
-        layout.addSpacing(30)
+        layout.addSpacing(8)
 
-        # Server control
+        # Server control group
+        actions_box = QGroupBox("Actions")
+        actions_layout = QVBoxLayout()
         hl2 = QHBoxLayout()
-        hl2.addWidget(self.button("Start Server", "start_btn"))
-        hl2.addWidget(self.button("Stop Server", "stop_btn"))
-        layout.addLayout(hl2)
+        self.start_btn = QPushButton("Start Server")
+        self.start_btn.setToolTip("Start the web server so phones/tablets can connect")
+        self.stop_btn = QPushButton("Stop Server")
+        self.stop_btn.setToolTip("Stop the web server")
+        hl2.addWidget(self.start_btn)
+        hl2.addWidget(self.stop_btn)
+        actions_layout.addLayout(hl2)
 
 
         # Open web interface
-        layout.addWidget(self.button("Open Printer Page", "open_web_btn"))
+        self.open_web_btn = QPushButton("Open Printer Page")
+        self.open_web_btn.setToolTip("Open the local web page for printing")
+        actions_layout.addWidget(self.open_web_btn)
 
-        # QR Code
-        layout.addWidget(self.button("QR Code", "qr_btn"))
+        # QR Code and Link helpers
+        self.qr_btn = QPushButton("QR Code")
+        self.qr_btn.setToolTip("Show a QR code to open the page on the phone")
+        actions_layout.addWidget(self.qr_btn)
+
+        actions_box.setLayout(actions_layout)
+        layout.addWidget(actions_box)
 
         self.setLayout(layout)
 
@@ -225,6 +279,17 @@ class ControlGUI(QWidget):
         self.open_web_btn.clicked.connect(self.open_web)
         self.qr_btn.clicked.connect(lambda: show_qr(self))
         self.find_printers_btn.clicked.connect(self.find_zebra_printers)
+        self.test_printer_btn.clicked.connect(lambda: test_print(self.printer_ip_input.text().strip()))
+
+        # Mark dirty on any field change
+        self.server_port_input.textChanged.connect(self.mark_dirty)
+        self.printer_ip_input.textChanged.connect(self.mark_dirty)
+        self.printer_port_input.textChanged.connect(self.mark_dirty)
+        self.autostart_checkbox.toggled.connect(self.mark_dirty)
+        self.decimals_checkbox.toggled.connect(self.mark_dirty)
+        self.decimals_spin.valueChanged.connect(self.mark_dirty)
+        for rb in getattr(self, 'price_suggestion_type_radios', []):
+            rb.toggled.connect(self.mark_dirty)
 
     # ---------------------------------------
     # MARK: SERVER CONTROL
@@ -264,9 +329,9 @@ class ControlGUI(QWidget):
     # ---------------------------------------
     def update_status(self):
         if server_running():
-            self.status_label.setText("🟢 Server Running")
+            self.status_label.setText("✔️ Server Running")
         else:
-            self.status_label.setText("🔴 Server Stopped")
+            self.status_label.setText("✖️ Server Stopped")
     
     def find_zebra_printers(self):
         flow = PrinterScanFlow()
@@ -287,6 +352,7 @@ class ControlGUI(QWidget):
         }
         save_config(cfg)
         QMessageBox.information(self, "Saved", "Settings saved.")
+        self.clear_dirty()
         
     def open_web(self):
         print("Opening web interface...")
@@ -297,6 +363,52 @@ class ControlGUI(QWidget):
         if not hasattr(self, "update_checker") or self.update_checker is None:
             self.update_checker = CheckforUpdate()
         self.update_checker.start_check(self)
+    
+    def show_help(self):
+        """Simple, readable guide for remote support and new users."""
+        self.help_window = QWidget(None)
+        self.help_window.setWindowTitle("Quick Guide")
+        self.help_window.resize(520, 480)
+        self.help_window.setFixedSize(self.help_window.size())
+        v = QVBoxLayout()
+        steps = [
+            "1. Enter the Printer IP (or click Find Printers).",
+            "2. Click Test Printer to check the connection.",
+            "3. Set Webserver Port (default is fine if works).",
+            "4. Click Start Server.",
+            "5. Open the web interface with the Open Web button.",
+            "6. Click Stop Server when finished.",
+        ]
+        for s in steps:
+            lbl = QLabel(s)
+            lbl.setWordWrap(True)
+            v.addWidget(lbl)
+        v.addSpacing(8)
+        v.addWidget(QLabel("Tips:"))
+        tips = [
+            "- If something doesn't work, restart the application.",
+            "- Save Settings to keep your changes for next time."
+        ]
+        for t in tips:
+            tl = QLabel(t)
+            tl.setWordWrap(True)
+            v.addWidget(tl)
+        close_btn = QPushButton("Close")
+        close_btn.clicked.connect(self.help_window.close)
+        v.addSpacing(12)
+        v.addWidget(close_btn)
+        self.help_window.setLayout(v)
+        self.help_window.show()
+
+    def mark_dirty(self):
+        self.dirty = True
+        self.unsaved_label.setText("Unsaved changes")
+        self.save_btn.setStyleSheet("background-color:#ffd966")
+
+    def clear_dirty(self):
+        self.dirty = False
+        self.unsaved_label.setText("")
+        self.save_btn.setStyleSheet("")
         
     def closeEvent(self, ev):
         kill_all_servers()

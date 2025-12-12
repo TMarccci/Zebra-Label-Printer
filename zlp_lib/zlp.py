@@ -19,7 +19,7 @@ DEFAULT_CONFIG = {
     "show_decimals": False,
     "decimal_places": 2,
     "price_suggestion_type": "Hungary",
-    "start_server_on_launch": False
+    "start_server_on_launch": True
 }
 
 def resource_path(relative_path):
