@@ -51,6 +51,8 @@ def load_config():
         return json.load(f)
 
 def save_config(cfg):
+    if not os.path.exists(APP_FOLDER):
+        os.makedirs(APP_FOLDER)
     with open(CONFIG_FILE, "w") as f:
         json.dump(cfg, f, indent=4)
         print("Config saved!")

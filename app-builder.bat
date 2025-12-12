@@ -12,6 +12,13 @@ pyinstaller --name "zlp-installer" ^
     --add-data "static;static" ^
     zlp-installer.py
 
+pyinstaller --name "zlp-uninstaller" ^
+    --onefile ^
+    --windowed ^
+    --icon=icon.png ^
+    --add-data "static;static" ^
+    zlp-uninstaller.py
+
 pyinstaller --name "zlp-server" ^
     --onefile ^
     --windowed ^
