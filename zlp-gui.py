@@ -4,16 +4,17 @@ import subprocess
 import psutil
 import webbrowser
 import requests
+import qrcode
 from PyQt5.QtCore import QTimer
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtNetwork import QLocalServer, QLocalSocket
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QMessageBox, QCheckBox, QSpinBox,
-    QRadioButton, QMenuBar, QVBoxLayout, QGroupBox, QFormLayout, QSpacerItem, QSizePolicy
+    QRadioButton, QMenuBar, QVBoxLayout, QGroupBox, QFormLayout,
 )
 
-from zlp_lib.zlp import resource_path, load_config, save_config, show_qr, test_print, CURRENT_PROGRAM_VERSION, APP_FOLDER, USER
+from zlp_lib.zlp import resource_path, load_config, save_config, test_print, CURRENT_PROGRAM_VERSION, APP_FOLDER, USER
 from zlp_gui.printerscan import PrinterScanFlow
 from zlp_gui.update import CheckforUpdate
 
@@ -277,9 +278,14 @@ class ControlGUI(QWidget):
         self.stop_btn.clicked.connect(self.stop_server)
         self.save_btn.clicked.connect(self.save_settings)
         self.open_web_btn.clicked.connect(self.open_web)
-        self.qr_btn.clicked.connect(lambda: show_qr(self))
+        self.qr_btn.clicked.connect(self.show_qr)
         self.find_printers_btn.clicked.connect(self.find_zebra_printers)
-        self.test_printer_btn.clicked.connect(lambda: test_print(self.printer_ip_input.text().strip()))
+        # if test_print True, show success message; else show failure message
+        self.test_printer_btn.clicked.connect(lambda:
+            QMessageBox.information(None, "Test Print", f"Test print sent to {self.printer_ip_input.text().strip()} successfully.") 
+            if test_print(self.printer_ip_input.text().strip()) 
+            else QMessageBox.warning(None, "Test Print", f"Failed to send test print to {self.printer_ip_input.text().strip()}.")
+        )
 
         # Mark dirty on any field change
         self.server_port_input.textChanged.connect(self.mark_dirty)
@@ -358,6 +364,31 @@ class ControlGUI(QWidget):
         print("Opening web interface...")
         port = self.server_port_input.text().strip()
         webbrowser.open(f"http://127.0.0.1:{port}")
+        
+    def show_qr(self):        
+        print("Generating QR code...")
+        port = self.server_port_input.text().strip()
+        url = f"http://192.168.137.1:{port}"
+
+        # Generate QR
+        qr = qrcode.QRCode(box_size=6, border=2)
+        qr.add_data(url)
+        qr.make()
+        img = qr.make_image(fill_color="black", back_color="white")
+
+        temp_path = os.path.join(APP_FOLDER, "qrcode_temp.png")
+        img.save(temp_path)
+
+        msg = QMessageBox(self)
+        msg.setWindowTitle("QR Code")
+        msg.setIcon(QMessageBox.Information)
+
+        qr_label = QLabel()
+        pix = QPixmap(temp_path)
+        qr_label.setPixmap(pix)
+
+        msg.layout().addWidget(qr_label, 1, 1)
+        msg.exec_()
         
     def check_for_updates(self):       
         if not hasattr(self, "update_checker") or self.update_checker is None:

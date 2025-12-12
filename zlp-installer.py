@@ -6,14 +6,8 @@ import json
 from pathlib import Path
 import threading
 import requests
-try:
-    import win32com.client as win32
-except Exception:
-    win32 = None
-try:
-    import pythoncom
-except Exception:
-    pythoncom = None
+import win32com.client as win32
+import pythoncom
 import urllib.request
 
 from zlp_lib.zlp import resource_path, APP_FOLDER, CURRENT_PROGRAM_VERSION, USER

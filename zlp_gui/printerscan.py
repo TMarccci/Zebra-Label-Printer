@@ -6,7 +6,7 @@ import socket
 import sys
 import psutil
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSize, QThread
-from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout
+from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QMessageBox
 from PyQt5.QtGui import QMovie
 
 from zlp_lib.zlp import resource_path, test_print
@@ -193,7 +193,12 @@ class PrinterScanFlow(QObject):
                 hl.addWidget(QLabel(str(ip)))
 
                 test_btn = QPushButton("Test Print")
-                test_btn.clicked.connect(lambda _, ip=ip: test_print(ip))
+                # If test_print trues, show success message; else show failure message
+                test_btn.clicked.connect(lambda _, ip=ip: 
+                    QMessageBox.information(None, "Test Print", f"Test print sent to {ip} successfully.") 
+                    if test_print(ip) 
+                    else QMessageBox.warning(None, "Test Print", f"Failed to send test print to {ip}.")
+                )
                 select_btn = QPushButton("Select")
                 select_btn.clicked.connect(lambda _, ip=ip: (parent.printer_ip_input.setText(ip), self._result_window.close()))
 
