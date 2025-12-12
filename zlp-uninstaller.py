@@ -157,8 +157,9 @@ class ZebraLabelPrinterUninstaller:
         exe_path = Path(self.app_path) / "Zebra-Label-Printer.exe"
         updater_path = Path(self.app_path) / "zlp-updater.exe"
         server_path = Path(self.app_path) / "zlp-server.exe"
+        uninstaller_path = Path(self.app_path) / "zlp-uninstaller.exe"
         # best-effort kill via taskkill
-        for name in ("Zebra-Label-Printer.exe", "zlp-updater.exe", "zlp-server.exe"):
+        for name in ("Zebra-Label-Printer.exe", "zlp-updater.exe", "zlp-server.exe", "zlp-uninstaller.exe"):
             try:
                 subprocess.run(["taskkill", "/IM", name, "/F"], capture_output=True)
             except Exception:
