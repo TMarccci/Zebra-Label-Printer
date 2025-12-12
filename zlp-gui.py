@@ -31,16 +31,6 @@ def get_server_path():
     
     return APP_FOLDER
 
-def kill_all_servers():
-    cfg = load_config()
-    try:
-        print("Sending stop request to server...")
-        requests.get(f"http://127.0.0.1:{cfg.get('server_port')}/stop", timeout=1)
-    except requests.exceptions.ConnectionError:
-        print("Server stopped.")
-    except requests.exceptions.ReadTimeout:
-        print("Server stopped (timeout).")
-
 def server_running():
     for proc in psutil.process_iter(["name"]):
         if proc.info["name"]:
@@ -300,9 +290,19 @@ class ControlGUI(QWidget):
     # ---------------------------------------
     # MARK: SERVER CONTROL
     # ---------------------------------------
+    def kill_all_servers(self):
+        cfg = load_config()
+        try:
+            print("Sending stop request to server...")
+            requests.get(f"http://127.0.0.1:{cfg.get('server_port')}/stop", timeout=1)
+        except requests.exceptions.ConnectionError:
+            print("Server stopped.")
+        except requests.exceptions.ReadTimeout:
+            print("Server stopped (timeout).")
+    
     def start_server(self):
         if not server_running():
-            kill_all_servers()  # ensure clean start
+            self.kill_all_servers()  # ensure clean start
 
             port = self.server_port_input.text().strip()
             server_path = get_server_path()
@@ -326,7 +326,7 @@ class ControlGUI(QWidget):
             QMessageBox.warning(self, "Warning!", "Server is already running!")
 
     def stop_server(self):
-        kill_all_servers()
+        self.kill_all_servers()
         self.server_process = None
         self.update_status()
 
@@ -442,7 +442,7 @@ class ControlGUI(QWidget):
         self.save_btn.setStyleSheet("")
         
     def closeEvent(self, ev):
-        kill_all_servers()
+        self.kill_all_servers()
         QTimer.singleShot(200, QApplication.instance().quit)
         ev.ignore()
 
