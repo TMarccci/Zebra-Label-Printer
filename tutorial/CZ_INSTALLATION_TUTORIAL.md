@@ -7,14 +7,14 @@ Zkontrolujte, zda je tiskárna Zebra v síti: stiskněte tlačítko X na tiskár
 
 | Stav | Obrázek |
 |------|---------|
-| Tiskárna je v pořádku | <img src="pictures/OK.JPEG" alt="Stav sítě tiskárny Zebra" width="420" /> |
-| Tiskárna není připojena | <img src="pictures/NO_NETWORK.JPEG" alt="Stav sítě tiskárny Zebra – nepřipojeno" width="420" /> |
+| Tiskárna je v pořádku | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/OK.JPEG" alt="Stav sítě tiskárny Zebra" width="420" /> |
+| Tiskárna není připojena | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/NO_NETWORK.JPEG" alt="Stav sítě tiskárny Zebra – nepřipojeno" width="420" /> |
 
 **Pokud máte potíže s připojením k síti, ověřte následující:**
 
 Ujistěte se, že je ethernetový kabel připojen do portu tiskárny:
 
-<img src="pictures/CABLE.png" alt="Ethernetový port tiskárny Zebra" width="420" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/CABLE.png" alt="Ethernetový port tiskárny Zebra" width="420" />
 
 ## Kroky instalace
 
@@ -24,12 +24,12 @@ Ujistěte se, že je ethernetový kabel připojen do portu tiskárny:
 
 2. Spusťte instalátor a potvrďte upozornění Windows SmartScreen, pokud se zobrazí.
 
-<img src="pictures/SMART_SCREEN_ACCEPT.png" alt="Upozornění Windows SmartScreen" width="520" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SMART_SCREEN_ACCEPT.png" alt="Upozornění Windows SmartScreen" width="520" />
 
 3. Postupujte podle pokynů na obrazovce.
 4. Dokončete průvodce instalací (je normální, že to může chvíli trvat — klidně si dejte kávu ☕).
 
-<img src="pictures/INSTALLER.png" alt="Průvodce instalací Zebra Label Printer" width="520" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/INSTALLER.png" alt="Průvodce instalací Zebra Label Printer" width="520" />
 
 5. Spusťte aplikaci z ikony na ploše nebo z nabídky Start. (Pokud se po instalaci nespustila automaticky.)
 
@@ -46,7 +46,7 @@ Ujistěte se, že je ethernetový kabel připojen do portu tiskárny:
 
 (Ukázka okna konfigurace)
 
-<img src="pictures/SCREENSHOT.png" alt="Konfigurační okno Zebra Label Printer" width="620" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT.png" alt="Konfigurační okno Zebra Label Printer" width="620" />
 
 ---
 
@@ -62,3 +62,10 @@ Ujistěte se, že je ethernetový kabel připojen do portu tiskárny:
 3. Nastavte množství etiket k tisku (výchozí je 1, pokud není zadáno).
 4. Klikněte na `Submit` pro tisk etikety.
 5. Ověřte, že se etiketa správně vytiskla na tiskárně Zebra.
+
+(Web Interface Screenshot)
+
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT_2.png" alt="Webové rozhraní Zebra Label Printer" />
+
+
+**Gratulujeme!** Úspěšně jste nainstalovali a nakonfigurovali aplikaci Zebra Label Printer. Nyní můžete efektivně tisknout cenové etikety pomocí webového rozhraní.

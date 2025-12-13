@@ -10,14 +10,14 @@ If the ethernet icon is green then your printer is connected to the network.
 
 | Status | Image |
 |--------|-------|
-| Printer is okay | <img src="pictures/OK.JPEG" alt="Zebra Printer Network Status" width="420" /> |
-| Printer is not okay | <img src="pictures/NO_NETWORK.JPEG" alt="Zebra Printer Network Status Not OK" width="420" /> |
+| Printer is okay | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/OK.JPEG" alt="Zebra Printer Network Status" width="420" /> |
+| Printer is not okay | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/NO_NETWORK.JPEG" alt="Zebra Printer Network Status Not OK" width="420" /> |
 
 **If you encounter issues with network connectivity, ensure the following:**
 
 Make sure you have an ethernet cable connected to your printer in the port below:
 
-<img src="pictures/CABLE.png" alt="Zebra Printer Ethernet Port" width="420" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/CABLE.png" alt="Zebra Printer Ethernet Port" width="420" />
 
 ## Installation Steps
 
@@ -27,12 +27,12 @@ Make sure you have an ethernet cable connected to your printer in the port below
 
 2. Launch the Application and Accept Windows SmartScreen warning if it appears.
 
-<img src="pictures/SMART_SCREEN_ACCEPT.png" alt="Windows SmartScreen Warning" width="520" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SMART_SCREEN_ACCEPT.png" alt="Windows SmartScreen Warning" width="520" />
 
 3. Follow the on-screen prompts
 4. Complete the setup wizard ( Don't worry if it takes a bit longer, it's normal. Grab a coffee ☕ while you wait. 😉 )
 
-<img src="pictures/INSTALLER.png" alt="Zebra Label Printer Setup Wizard" width="520" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/INSTALLER.png" alt="Zebra Label Printer Setup Wizard" width="520" />
 
 5. Launch the application from the Desktop icon or Start Menu. (If it doesn't open automatically after installation.)
 
@@ -49,7 +49,7 @@ Make sure you have an ethernet cable connected to your printer in the port below
 
 (Example of the configuration window)
 
-<img src="pictures/SCREENSHOT.png" alt="Zebra Label Printer Configuration Window" width="620" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT.png" alt="Zebra Label Printer Configuration Window" width="620" />
 
 ---
 
@@ -68,7 +68,7 @@ Make sure you have an ethernet cable connected to your printer in the port below
 
 (Web Interface Screenshot)
 
-<img src="pictures/SCREENSHOT_2.png" alt="Zebra Label Printer Web Interface" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT_2.png" alt="Zebra Label Printer Web Interface" />
 
 
 **Congratulations!** You have successfully installed and configured the Zebra Label Printer application. You can now print price labels efficiently using the web interface.

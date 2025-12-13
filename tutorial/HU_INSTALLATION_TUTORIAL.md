@@ -7,14 +7,14 @@ Ellenőrizd, hogy a Zebra nyomtató hálózaton van-e: nyomd meg az X gombot a n
 
 | Állapot | Kép |
 |--------|-----|
-| Nyomtató rendben | <img src="pictures/OK.JPEG" alt="Zebra nyomtató hálózati állapot" width="420" /> |
-| Nyomtató nincs csatlakoztatva | <img src="pictures/NO_NETWORK.JPEG" alt="Zebra nyomtató hálózati állapot – nincs kapcsolat" width="420" /> |
+| Nyomtató rendben | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/OK.JPEG" alt="Zebra nyomtató hálózati állapot" width="420" /> |
+| Nyomtató nincs csatlakoztatva | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/NO_NETWORK.JPEG" alt="Zebra nyomtató hálózati állapot – nincs kapcsolat" width="420" /> |
 
 **Ha hálózati problémát tapasztalsz, ellenőrizd az alábbiakat:**
 
 Győződj meg róla, hogy az Ethernet kábel be van dugva a nyomtató alábbi portjába:
 
-<img src="pictures/CABLE.png" alt="Zebra nyomtató Ethernet port" width="420" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/CABLE.png" alt="Zebra nyomtató Ethernet port" width="420" />
 
 ## Telepítés lépései
 
@@ -24,12 +24,12 @@ Győződj meg róla, hogy az Ethernet kábel be van dugva a nyomtató alábbi po
 
 2. Indítsd el az alkalmazást, és fogadd el a Windows SmartScreen figyelmeztetést, ha megjelenik.
 
-<img src="pictures/SMART_SCREEN_ACCEPT.png" alt="Windows SmartScreen figyelmeztetés" width="520" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SMART_SCREEN_ACCEPT.png" alt="Windows SmartScreen figyelmeztetés" width="520" />
 
 3. Kövesd a képernyőn megjelenő utasításokat.
 4. Fejezd be a telepítő varázslót (ha tovább tart, az normális — nyugodtan igyál egy kávét ☕).
 
-<img src="pictures/INSTALLER.png" alt="Zebra Label Printer telepítő varázsló" width="520" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/INSTALLER.png" alt="Zebra Label Printer telepítő varázsló" width="520" />
 
 5. Indítsd el az alkalmazást az asztali ikonról vagy a Start menüből. (Ha a telepítés után nem nyílt meg automatikusan.)
 
@@ -46,7 +46,7 @@ Győződj meg róla, hogy az Ethernet kábel be van dugva a nyomtató alábbi po
 
 (Konfigurációs ablak példa)
 
-<img src="pictures/SCREENSHOT.png" alt="Zebra Label Printer konfigurációs ablak" width="620" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT.png" alt="Zebra Label Printer konfigurációs ablak" width="620" />
 
 ---
 
@@ -62,3 +62,10 @@ Győződj meg róla, hogy az Ethernet kábel be van dugva a nyomtató alábbi po
 3. Állítsd be a nyomtatandó címkék mennyiségét (alapértelmezés szerint 1, ha nincs megadva).
 4. Kattints a `Submit` gombra a címke nyomtatásához.
 5. Ellenőrizd, hogy a címke megfelelően kinyomtatódott a Zebra nyomtatón.
+
+(Webes felület képernyőképe)
+
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT_2.png" alt="Zebra Label Printer webes felület" />
+
+
+**Gratulálunk!** Sikeresen telepítetted és beállítottad a Zebra Label Printer alkalmazást. Mostantól hatékonyan nyomtathatsz ár címkéket a webes felületen keresztül.
