@@ -27,7 +27,8 @@
         newPriceStar: document.getElementById('newprice-star'),
         cleanupBtn: document.getElementById('cleanup'),
         clearhistoryBtn: document.getElementById('clearhistory'),
-        prevPrints: document.getElementById('prevprints')
+        prevPrints: document.getElementById('prevprints'),
+        timeSavedLabel: document.getElementById('time_saved')
     };
 
     // -----------------------------
@@ -60,6 +61,66 @@
         const isSale = type === 'old';
         elements.salepart.style.display = isSale ? 'block' : 'none';
         elements.newPriceStar.style.display = isSale ? 'none' : 'inline-block';
+    }
+
+    function appendPrintQtyToLocalStorage() {
+        try {
+            // Get current quantity from localStorage if exists
+            let qty = safeLocalStorage('get', 'lastPrintQty');;
+            qty = qty ? parseInt(qty) : 0;
+
+            // Increment quantity
+            qty += parseInt(elements.printQty.value) || 0;
+            safeLocalStorage('set', 'lastPrintQty', qty.toString());
+        } catch (err) {
+            console.warn('LocalStorage Error:', err);
+        }
+    }
+
+    function updateTimeSavedLabel() {
+        try {
+            let qty = safeLocalStorage('get', 'lastPrintQty');
+            qty = qty ? parseInt(qty) : 0;
+            const timeSavedSeconds = qty * 45; // 45 seconds per label 
+
+
+            // if more than 1 day, show days too
+            if (timeSavedSeconds >= 86400) {
+                const days = Math.floor(timeSavedSeconds / 86400);
+                const hours = Math.floor((timeSavedSeconds % 86400) / 3600);
+                const minutes = Math.floor((timeSavedSeconds % 3600) / 60);
+                const seconds = Math.round(timeSavedSeconds % 60);
+                let displayText = '';
+                displayText += `${days} d `;
+                if (hours > 0) displayText += `${hours} hr `;
+                if (minutes > 0) displayText += `${minutes} min `;
+                displayText += `${seconds} sec`;
+                elements.timeSavedLabel.textContent = displayText;
+                return;
+            }
+
+            // if more than 1 hour, show hours too
+            if (timeSavedSeconds >= 3600) {
+                const hours = Math.floor(timeSavedSeconds / 3600);
+                const minutes = Math.floor((timeSavedSeconds % 3600) / 60);
+                const seconds = Math.round(timeSavedSeconds % 60);
+                let displayText = '';
+                displayText += `${hours} hr `;
+                if (minutes > 0) displayText += `${minutes} min `;
+                displayText += `${seconds} sec`;
+                elements.timeSavedLabel.textContent = displayText;
+                return;
+            }
+
+            const minutes = Math.floor(timeSavedSeconds / 60);
+            const seconds = Math.round(timeSavedSeconds % 60);
+            let displayText = '';
+            if (minutes > 0) displayText += `${minutes} min `;
+            displayText += `${seconds} sec`;
+            elements.timeSavedLabel.textContent = displayText;
+        } catch (err) {
+            console.warn('LocalStorage Error:', err);
+        }
     }
 
     // -----------------------------
@@ -116,6 +177,9 @@
         const entry = { old: oldP, new: newP, discount: discountID };
         updateHistory(entry);
 
+        appendPrintQtyToLocalStorage();
+        updateTimeSavedLabel();
+
         setTimeout(() => e.target.submit(), 50);
     }
 
@@ -144,6 +208,9 @@
             discountID = Math.round((100 - (newP / oldP) * 100).toFixed(2));
             document.getElementById("0").value = newP / oldP;
         }
+
+        appendPrintQtyToLocalStorage();
+        updateTimeSavedLabel();
 
         elements.form.submit();
     }
@@ -294,6 +361,7 @@
         loadSavedMode();
         renderHistory();
         addListeners();
+        updateTimeSavedLabel();
     }
 
     document.readyState === 'loading'

@@ -3,6 +3,7 @@ pyinstaller --name "zlp-updater" ^
     --windowed ^
     --icon=icon.png ^
     --add-data "static;static" ^
+    --version-file=version.txt ^
     zlp-updater.py
 
 pyinstaller --name "zlp-installer" ^
@@ -10,6 +11,7 @@ pyinstaller --name "zlp-installer" ^
     --windowed ^
     --icon=icon.png ^
     --add-data "static;static" ^
+    --version-file=version.txt ^
     zlp-installer.py
 
 pyinstaller --name "zlp-uninstaller" ^
@@ -17,6 +19,7 @@ pyinstaller --name "zlp-uninstaller" ^
     --windowed ^
     --icon=icon.png ^
     --add-data "static;static" ^
+    --version-file=version.txt ^
     zlp-uninstaller.py
 
 pyinstaller --name "zlp-server" ^
@@ -25,6 +28,7 @@ pyinstaller --name "zlp-server" ^
     --icon=icon.png ^
     --add-data "templates;templates" ^
     --add-data "static;static" ^
+    --version-file=version.txt ^
     zlp-server.py
 
 pyinstaller --name "Zebra-Label-Printer" ^
@@ -32,6 +36,7 @@ pyinstaller --name "Zebra-Label-Printer" ^
     --windowed ^
     --icon=icon.png ^
     --add-data "static;static" ^
+    --version-file=version.txt ^
     zlp-gui.py
 
 rmdir /Q /s build

@@ -3,7 +3,7 @@ import sys
 import socket
 import json
 
-CURRENT_PROGRAM_VERSION = "1.1.3"
+CURRENT_PROGRAM_VERSION = "1.1.4"
 USER = os.getenv("USERNAME")
 APP_FOLDER = f"C:\\Users\\{USER}\\Zebra Label Printer"
 CONFIG_FILE = os.path.join(APP_FOLDER, "gui_config.json")
