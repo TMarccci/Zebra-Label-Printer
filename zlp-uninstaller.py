@@ -7,9 +7,17 @@ import subprocess
 from pathlib import Path
 
 try:
+    import win32api
+    import win32con
+except Exception:
+    win32api = None
+    win32con = None
+
+try:
     import win32com.client as win32
 except Exception:
     win32 = None
+    
 try:
     import pythoncom
 except Exception:
@@ -103,7 +111,9 @@ class ZebraLabelPrinterUninstaller:
 
         self._log("Uninstall complete.")
         self._running = False
-        self.progress_label.config(text="Uninstaller completed")
+        self.progress_label.config(
+            text="Uninstall complete (restart required)"
+        )        
         self.progress.config(value=100)
         # Switch footer buttons: disable Uninstall, show Close
         try:
@@ -154,7 +164,7 @@ class ZebraLabelPrinterUninstaller:
                 pythoncom.CoUninitialize()
 
     def _remove_app_files(self):
-        # best-effort kill via taskkill (do NOT kill the running uninstaller)
+        # Kill running app processes (never the uninstaller)
         names_to_kill = ("Zebra-Label-Printer.exe", "zlp-updater.exe", "zlp-server.exe")
         try:
             si = subprocess.STARTUPINFO()
@@ -163,28 +173,57 @@ class ZebraLabelPrinterUninstaller:
         except Exception:
             si = None
             creationflags = 0
-            
+
         for name in names_to_kill:
             try:
-                subprocess.run(["taskkill", "/IM", name, "/F"], capture_output=True, startupinfo=si, creationflags=creationflags)
+                subprocess.run(
+                    ["taskkill", "/IM", name, "/F"],
+                    capture_output=True,
+                    startupinfo=si,
+                    creationflags=creationflags
+                )
             except Exception:
                 pass
 
         current_exe = Path(sys.executable).resolve()
+        app_path = Path(self.app_path)
 
-        for item in Path(self.app_path).iterdir():
+        failed_items = []
+
+        for item in app_path.iterdir():
             try:
                 if item.resolve() == current_exe:
-                    self._log("Skipping uninstaller executable.")
+                    # Cannot delete running uninstaller
                     continue
                 if item.is_dir():
                     shutil.rmtree(item)
                 else:
                     item.unlink()
             except Exception as e:
+                failed_items.append(item)
                 self._log(f"Failed to remove {item}: {e}")
 
+        # If only the uninstaller remains, schedule folder deletion
+        remaining = list(app_path.iterdir())
+
+        if len(remaining) == 1 and remaining[0].resolve() == current_exe:
+            self._log("Only uninstaller remains; scheduling folder deletion on reboot.")
+            if self._schedule_delete_on_reboot(app_path):
+                messagebox.showinfo(
+                    "Restart Required",
+                    "Zebra Label Printer will be fully removed after you restart Windows."
+                )
+            return
+
+        if not remaining:
+            try:
+                app_path.rmdir()
+                self._log("Removed empty app folder.")
+            except Exception:
+                pass
+
         self._log("Application files removed (except uninstaller).")
+
 
     def clear_window(self):
         for widget in self.root.winfo_children():
@@ -195,6 +234,24 @@ class ZebraLabelPrinterUninstaller:
             self.log_text.insert("end", message + "\n")
             self.log_text.see("end")
             self.root.update_idletasks()
+        
+    def _schedule_delete_on_reboot(self, path: Path):
+        if win32api is None or win32con is None:
+            self._log("pywin32 not available; cannot schedule deletion on reboot.")
+            return False
+
+        try:
+            win32api.MoveFileEx(
+                str(path),
+                None,
+                win32con.MOVEFILE_DELAY_UNTIL_REBOOT
+            )
+            self._log(f"Scheduled deletion on reboot: {path}")
+            return True
+        except Exception as e:
+            self._log(f"Failed to schedule deletion on reboot: {e}")
+            return False
+
 
 
 if __name__ == "__main__":
