@@ -128,6 +128,8 @@ class ControlGUI(QWidget):
         file_menu = menubar.addMenu("File")
         file_menu.addAction("Check for Updates", self.check_for_updates)
         file_menu.addSeparator()
+        file_menu.addAction("Uninstall Zebra Label Printer", self.launch_uninstaller)
+        file_menu.addSeparator()
         file_menu.addAction("Exit", self.close)
         help_menu = menubar.addMenu("Help")
         help_menu.addAction("Quick Guide", self.show_help)
@@ -448,6 +450,23 @@ class ControlGUI(QWidget):
         QTimer.singleShot(200, QApplication.instance().quit)
         ev.ignore()
 
+    def launch_uninstaller(self):
+        # Ask for confirmation
+        if not QMessageBox.question(self, "Uninstall", "This will uninstall Zebra Label Printer from your system. Continue?", QMessageBox.Yes | QMessageBox.No) == QMessageBox.Yes:
+            return
+        
+        # Launch uninstaller
+        uninstaller_path = os.path.join(APP_FOLDER, "zlp-uninstaller.exe")
+        try:
+            if os.path.exists(uninstaller_path):
+                subprocess.Popen([uninstaller_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                print("Launched uninstaller.")
+                QApplication.instance().quit()
+            else:
+                QMessageBox.critical(self, "Error", "Uninstaller not found.")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", str(e))
+    
 # ---------------------------------------
 # MARK: ENTRY
 # ---------------------------------------
