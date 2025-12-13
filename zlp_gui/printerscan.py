@@ -5,7 +5,7 @@ import ipaddress
 import socket
 import sys
 import psutil
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSize, QThread
+from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot, QSize, QThread, Qt, QTimer
 from PyQt5.QtWidgets import QWidget, QVBoxLayout, QLabel, QPushButton, QHBoxLayout, QMessageBox
 from PyQt5.QtGui import QMovie
 
@@ -69,16 +69,18 @@ class ScannerWorker(QObject):
         """Probe a host for a Zebra-compatible response on port 9100.
 
         Returns True when the returned banner suggests a Zebra/ZPL device.
-        Note: This currently returns True on exceptions as a permissive fallback.
         """
         try:
             sock = socket.create_connection((str(ip), ZEBRA_PORT), timeout=TIMEOUT)
             sock.sendall(b"~HI\n")
             response = sock.recv(1024).decode(errors="ignore")
             sock.close()
-            return "Zebra" in response or "ZPL" in response or "HONEYWELL" in response
+            return "Zebra" in response or "ZPL" in response or "HONEYWELL" in response or "ZD" in response
         except:
-            return True
+            if "--dev" in sys.argv:
+                print(f"Dev: Simulating Zebra printer at {ip}")
+                return True
+            return False
 
     def scan_subnet(self, subnet, ZEBRA_PORT=9100, TIMEOUT=0.3):
         """Iterate hosts in a CIDR and collect reachable printer endpoints."""
@@ -181,12 +183,10 @@ class PrinterScanFlow(QObject):
 
         status = QLabel()
         layout.addWidget(status)
-
-        if not printers:
-            status.setText("No Zebra printers found.")
-            close_btn = QPushButton("Close")
-            close_btn.clicked.connect(self._result_window.close)
-            layout.addWidget(close_btn)
+        
+        if printers == []:
+            QTimer.singleShot(0, lambda: QMessageBox.information(parent, "Printer Scan", "No Zebra printers found on the scanned networks."))
+            
         else:
             status.setText("Found printers:")
             for ip in printers:
