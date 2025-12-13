@@ -329,8 +329,8 @@ class ControlGUI(QWidget):
             QMessageBox.warning(self, "Warning!", "Server is already running!")
 
     def stop_server(self):
-        self.kill_all_servers()
         self.server_process = None
+        self.kill_all_servers()
         self.update_status()
 
     # ---------------------------------------
@@ -362,8 +362,10 @@ class ControlGUI(QWidget):
         save_config(cfg)
         QMessageBox.information(self, "Saved", "Settings saved.\nRestarting server...")
         self.stop_server()
-        self.start_server()
         self.clear_dirty()
+        
+        # start server 2 seconds later to allow time for shutdown
+        QTimer.singleShot(2000, self.start_server)
         
     def open_web(self):
         print("Opening web interface...")
