@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import os
 import shutil
+import sys
 import subprocess
 from pathlib import Path
 
@@ -153,34 +154,37 @@ class ZebraLabelPrinterUninstaller:
                 pythoncom.CoUninitialize()
 
     def _remove_app_files(self):
-        # Attempt to stop running app before removal
-        exe_path = Path(self.app_path) / "Zebra-Label-Printer.exe"
-        updater_path = Path(self.app_path) / "zlp-updater.exe"
-        server_path = Path(self.app_path) / "zlp-server.exe"
         # best-effort kill via taskkill (do NOT kill the running uninstaller)
         names_to_kill = ("Zebra-Label-Printer.exe", "zlp-updater.exe", "zlp-server.exe")
         try:
             si = subprocess.STARTUPINFO()
             si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            # CREATE_NO_WINDOW keeps Command Prompt windows from flashing
             creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
         except Exception:
             si = None
             creationflags = 0
+            
         for name in names_to_kill:
             try:
                 subprocess.run(["taskkill", "/IM", name, "/F"], capture_output=True, startupinfo=si, creationflags=creationflags)
             except Exception:
                 pass
 
-        if os.path.isdir(self.app_path):
+        current_exe = Path(sys.executable).resolve()
+
+        for item in Path(self.app_path).iterdir():
             try:
-                shutil.rmtree(self.app_path)
-                self._log(f"Removed app folder: {self.app_path}")
+                if item.resolve() == current_exe:
+                    self._log("Skipping uninstaller executable.")
+                    continue
+                if item.is_dir():
+                    shutil.rmtree(item)
+                else:
+                    item.unlink()
             except Exception as e:
-                self._log(f"Failed to remove app folder: {e}")
-        else:
-            self._log("App folder not found.")
+                self._log(f"Failed to remove {item}: {e}")
+
+        self._log("Application files removed (except uninstaller).")
 
     def clear_window(self):
         for widget in self.root.winfo_children():
