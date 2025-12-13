@@ -407,10 +407,9 @@ class ControlGUI(QWidget):
         steps = [
             "1. Enter the Printer IP (or click Find Printers).",
             "2. Click Test Printer to check the connection.",
-            "3. Set Webserver Port (default is fine if works).",
+            "3. Save Configuration.",
             "4. Click Start Server.",
             "5. Open the web interface with the Open Web button.",
-            "6. Click Stop Server when finished.",
         ]
         for s in steps:
             lbl = QLabel(s)
