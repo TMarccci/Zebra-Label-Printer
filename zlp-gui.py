@@ -357,7 +357,9 @@ class ControlGUI(QWidget):
             "start_server_on_launch": self.autostart_checkbox.isChecked()
         }
         save_config(cfg)
-        QMessageBox.information(self, "Saved", "Settings saved.")
+        QMessageBox.information(self, "Saved", "Settings saved.\nRestarting server...")
+        self.stop_server()
+        self.start_server()
         self.clear_dirty()
         
     def open_web(self):
