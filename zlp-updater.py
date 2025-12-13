@@ -43,6 +43,7 @@ class UpdateWorker(threading.Thread):
             wanted = {
                 "Zebra-Label-Printer.exe": None,
                 "zlp-server.exe": None,
+                "zlp-uninstaller.exe": None,
             }
             for a in assets:
                 name = a.get('name')
