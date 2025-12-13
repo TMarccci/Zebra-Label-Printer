@@ -157,11 +157,19 @@ class ZebraLabelPrinterUninstaller:
         exe_path = Path(self.app_path) / "Zebra-Label-Printer.exe"
         updater_path = Path(self.app_path) / "zlp-updater.exe"
         server_path = Path(self.app_path) / "zlp-server.exe"
-        uninstaller_path = Path(self.app_path) / "zlp-uninstaller.exe"
-        # best-effort kill via taskkill
-        for name in ("Zebra-Label-Printer.exe", "zlp-updater.exe", "zlp-server.exe", "zlp-uninstaller.exe"):
+        # best-effort kill via taskkill (do NOT kill the running uninstaller)
+        names_to_kill = ("Zebra-Label-Printer.exe", "zlp-updater.exe", "zlp-server.exe")
+        try:
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            # CREATE_NO_WINDOW keeps Command Prompt windows from flashing
+            creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        except Exception:
+            si = None
+            creationflags = 0
+        for name in names_to_kill:
             try:
-                subprocess.run(["taskkill", "/IM", name, "/F"], capture_output=True)
+                subprocess.run(["taskkill", "/IM", name, "/F"], capture_output=True, startupinfo=si, creationflags=creationflags)
             except Exception:
                 pass
 
