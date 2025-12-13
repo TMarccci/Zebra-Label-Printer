@@ -4,6 +4,7 @@ import subprocess
 import psutil
 import webbrowser
 import requests
+import shutil
 import qrcode
 from PyQt5.QtCore import QTimer
 from PyQt5.QtGui import QIcon, QPixmap
@@ -457,6 +458,19 @@ def run_gui():
     # Prevent launching if another instance is already running
     if ensure_single_instance(app) is None:
         sys.exit(0)
+        
+    # Check if updater got an update ready, it as when updater_temp exists
+    updater_temp_dir = os.path.join(APP_FOLDER, "updater_temp")
+    if os.path.exists(updater_temp_dir):
+        try:
+            for name in os.listdir(updater_temp_dir):
+                src = os.path.join(updater_temp_dir, name)
+                dst = os.path.join(APP_FOLDER, name)
+                shutil.copy2(src, dst)
+            shutil.rmtree(updater_temp_dir)
+            print("Applied pending update from updater_temp.")
+        except Exception as e:
+            print(f"Failed to apply pending update: {str(e)}")
 
     gui = ControlGUI()
     gui.show()

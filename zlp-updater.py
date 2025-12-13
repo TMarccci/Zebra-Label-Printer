@@ -44,6 +44,7 @@ class UpdateWorker(threading.Thread):
                 "Zebra-Label-Printer.exe": None,
                 "zlp-server.exe": None,
                 "zlp-uninstaller.exe": None,
+                "zlp-updater.exe": None,
             }
             for a in assets:
                 name = a.get('name')
@@ -75,7 +76,13 @@ class UpdateWorker(threading.Thread):
                     shutil.copy2(target_file, target_file + ".bak")
 
                 self._progress(f"Replacing {name}...")
-                shutil.copy2(temp_file, target_file)
+                if name != "zlp-updater.exe":
+                    shutil.copy2(temp_file, target_file)
+                else:
+                    updater_temp_dir = os.path.join(self.app_path, "updater_temp")
+                    if not os.path.exists(updater_temp_dir):
+                        os.makedirs(updater_temp_dir)
+                    shutil.copy2(temp_file, os.path.join(updater_temp_dir, name))
 
                 self._progress(f"Cleaning up {name} temp file...")
                 try:
