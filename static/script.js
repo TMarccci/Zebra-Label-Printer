@@ -70,7 +70,7 @@
             qty = qty ? parseInt(qty) : 0;
 
             // Increment quantity
-            qty += parseInt(elements.printQty.value) || 0;
+            qty += 1;
             safeLocalStorage('set', 'lastPrintQty', qty.toString());
         } catch (err) {
             console.warn('LocalStorage Error:', err);
