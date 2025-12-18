@@ -1,6 +1,7 @@
 import sys
 import os
 import subprocess
+import threading
 import psutil
 import webbrowser
 import requests
@@ -106,6 +107,18 @@ class ControlGUI(QWidget):
         if self.config.get("start_server_on_launch", False):
             print("Autostarting server...")
             QTimer.singleShot(2000, self.start_server)
+            
+        # Try to signal a heartbeat to https://heartbeat.tmarccci.hu/api/beat?device-name=EXAMPLE-PC&version=1.1.1 on a background thread
+        def send_heartbeat():
+            try:
+                device_name = os.getenv("COMPUTERNAME", "Unknown-PC")
+                url = f"https://heartbeat.tmarccci.hu/api/beat?device-name={device_name}&version={CURRENT_PROGRAM_VERSION}"
+                requests.get(url, timeout=5)
+                print("Heartbeat sent.")
+            except Exception:
+                print("Failed to send heartbeat.")
+                
+        threading.Thread(target=send_heartbeat, daemon=True).start()
 
     # UI
     def setup_ui(self):
@@ -364,8 +377,8 @@ class ControlGUI(QWidget):
         self.stop_server()
         self.clear_dirty()
         
-        # start server 2 seconds later to allow time for shutdown
-        QTimer.singleShot(2000, self.start_server)
+        # start server 4.5 seconds later to allow time for shutdown
+        QTimer.singleShot(4500, self.start_server)
         
     def open_web(self):
         print("Opening web interface...")
