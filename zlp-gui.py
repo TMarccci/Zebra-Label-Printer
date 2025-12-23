@@ -13,7 +13,7 @@ from PyQt5.QtNetwork import QLocalServer, QLocalSocket
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QMessageBox, QCheckBox, QSpinBox,
-    QRadioButton, QMenuBar, QVBoxLayout, QGroupBox, QFormLayout, QComboBox
+    QRadioButton, QMenuBar, QVBoxLayout, QGroupBox, QFormLayout, QComboBox, QStackedWidget
 )
 
 from zlp_lib.zlp import resource_path, load_config, save_config, test_print, get_usb_printers, test_usb_print, CURRENT_PROGRAM_VERSION, APP_FOLDER, USER
@@ -87,7 +87,7 @@ class ControlGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Zebra Label Printer")
-        self.resize(600, 775)
+        self.resize(600, 500)
         self.setFixedSize(self.size())
 
         self.server_process = None
@@ -134,6 +134,7 @@ class ControlGUI(QWidget):
             QGroupBox { font-size: 15px; font-weight: bold; margin-top: 12px; }
             QGroupBox::title { subcontrol-origin: margin; subcontrol-position: top left; padding: 4px 6px; }
             QPushButton { font-size: 14px; padding: 8px 12px; }
+            QPushButton[navActive="true"] { background-color:#ffd966; font-weight:bold; }
             QLineEdit, QSpinBox { font-size: 14px; padding: 6px; }
             QRadioButton, QCheckBox { font-size: 14px; }
             """
@@ -166,18 +167,66 @@ class ControlGUI(QWidget):
 
         layout.addSpacing(8)
 
-        # Server settings group
+        # Top navigation
+        nav = QHBoxLayout()
+        self.nav_main_btn = QPushButton("Main")
+        self.nav_server_btn = QPushButton("Server Settings")
+        self.nav_currency_btn = QPushButton("Currency")
+        self.nav_main_btn.setProperty("navActive", "true")
+        self.nav_server_btn.setProperty("navActive", "false")
+        self.nav_currency_btn.setProperty("navActive", "false")
+        nav.addWidget(self.nav_main_btn)
+        nav.addWidget(self.nav_server_btn)
+        nav.addWidget(self.nav_currency_btn)
+        layout.addLayout(nav)
+
+        self.pages = QStackedWidget()
+
+        # -----------------
+        # Page 1: Main
+        # -----------------
+        main_page = QWidget()
+        main_v = QVBoxLayout()
+        actions_box = QGroupBox("Actions")
+        actions_layout = QVBoxLayout()
+        hl2 = QHBoxLayout()
+        self.start_btn = QPushButton("Start Server")
+        self.start_btn.setToolTip("Start the web server so phones/tablets can connect")
+        self.stop_btn = QPushButton("Stop Server")
+        self.stop_btn.setToolTip("Stop the web server")
+        hl2.addWidget(self.start_btn)
+        hl2.addWidget(self.stop_btn)
+        actions_layout.addLayout(hl2)
+
+        self.open_web_btn = QPushButton("Open Printer Page")
+        self.open_web_btn.setToolTip("Open the local web page for printing")
+        actions_layout.addWidget(self.open_web_btn)
+
+        self.qr_btn = QPushButton("QR Code")
+        self.qr_btn.setToolTip("Show a QR code to open the page on the phone")
+        actions_layout.addWidget(self.qr_btn)
+
+        actions_box.setLayout(actions_layout)
+        main_v.addStretch(1)
+        main_v.addWidget(actions_box)
+        main_page.setLayout(main_v)
+        self.pages.addWidget(main_page)
+
+        # -----------------
+        # Page 2: Server Settings
+        # -----------------
+        server_page = QWidget()
+        server_page_v = QVBoxLayout()
+
         server_box = QGroupBox("Server Settings")
         server_layout = QVBoxLayout()
 
-        # Webserver port
         server_form = QFormLayout()
         self.server_port_input = QLineEdit(self.config["server_port"])
         self.server_port_input.setToolTip("Port number for the built-in web interface")
         server_form.addRow("Webserver Port:", self.server_port_input)
         server_layout.addLayout(server_form)
 
-        # Print mode selector
         mode_row = QHBoxLayout()
         mode_row.addWidget(QLabel("Print Mode:"))
         self.print_mode_net_rb = QRadioButton("NET/TCP")
@@ -192,7 +241,6 @@ class ControlGUI(QWidget):
         mode_row.addStretch(1)
         server_layout.addLayout(mode_row)
 
-        # Two columns: NET/TCP settings + USB settings
         cols = QHBoxLayout()
 
         self.net_settings_box = QGroupBox("NET/TCP Settings")
@@ -200,10 +248,10 @@ class ControlGUI(QWidget):
         ip_row = QHBoxLayout()
         self.find_printers_btn = QPushButton("Find Printers")
         self.find_printers_btn.setToolTip("Scan the network for compatible printers")
-        
+
         self.printer_ip_input = QLineEdit(self.config["printer_ip"])
         self.printer_ip_input.setToolTip("Printer IP address (e.g. 192.168.1.100)")
-        
+
         net_form.addWidget(self.find_printers_btn)
         ip_row.addWidget(self.printer_ip_input)
         net_form.addRow(QLabel("Printer IP:"), ip_row)
@@ -220,6 +268,7 @@ class ControlGUI(QWidget):
         self.usb_printer_combo.setToolTip("Select the local USB printer")
         self.usb_refresh_btn = QPushButton("Refresh")
         self.usb_refresh_btn.setToolTip("Re-scan connected USB printers")
+
         usb_printers = get_usb_printers()
         if usb_printers:
             self.usb_printer_combo.addItems(usb_printers)
@@ -240,7 +289,6 @@ class ControlGUI(QWidget):
 
         server_layout.addLayout(cols)
 
-        # Full-width Test Printer button (under both columns)
         self.test_printer_btn = QPushButton("Test Printer")
         self.test_printer_btn.setToolTip("Test printing for the currently selected mode")
         server_layout.addWidget(self.test_printer_btn)
@@ -251,11 +299,19 @@ class ControlGUI(QWidget):
         server_layout.addWidget(self.autostart_checkbox)
 
         server_box.setLayout(server_layout)
-        layout.addWidget(server_box)
-        
-        layout.addSpacing(8)
-        
-        # Currency settings group
+        server_page_v.addStretch(1)
+        server_page_v.addWidget(server_box)
+        self.save_server_btn = QPushButton("Save Configuration")
+        server_page_v.addWidget(self.save_server_btn)
+        server_page.setLayout(server_page_v)
+        self.pages.addWidget(server_page)
+
+        # -----------------
+        # Page 3: Currency
+        # -----------------
+        currency_page = QWidget()
+        currency_v = QVBoxLayout()
+
         currency_box = QGroupBox("Currency Settings")
         currency_layout = QVBoxLayout()
         currency_layout.addLayout(self._radio_row("Price Suggestion Type:", ["Hungary", "Poland", "Czech"], "price_suggestion_type"))
@@ -274,41 +330,19 @@ class ControlGUI(QWidget):
         hl.addWidget(self.decimals_spin)
         currency_layout.addLayout(hl)
         currency_box.setLayout(currency_layout)
-        layout.addWidget(currency_box)
-        
-        layout.addSpacing(8)
+        currency_v.addStretch(1)
+        currency_v.addWidget(currency_box)
+        self.save_currency_btn = QPushButton("Save Configuration")
+        currency_v.addWidget(self.save_currency_btn)
+        currency_page.setLayout(currency_v)
+        self.pages.addWidget(currency_page)
 
-        layout.addWidget(self.button("Save Settings", "save_btn"))
-        
-        layout.addSpacing(8)
-
-        # Server control group
-        actions_box = QGroupBox("Actions")
-        actions_layout = QVBoxLayout()
-        hl2 = QHBoxLayout()
-        self.start_btn = QPushButton("Start Server")
-        self.start_btn.setToolTip("Start the web server so phones/tablets can connect")
-        self.stop_btn = QPushButton("Stop Server")
-        self.stop_btn.setToolTip("Stop the web server")
-        hl2.addWidget(self.start_btn)
-        hl2.addWidget(self.stop_btn)
-        actions_layout.addLayout(hl2)
-
-
-        # Open web interface
-        self.open_web_btn = QPushButton("Open Printer Page")
-        self.open_web_btn.setToolTip("Open the local web page for printing")
-        actions_layout.addWidget(self.open_web_btn)
-
-        # QR Code and Link helpers
-        self.qr_btn = QPushButton("QR Code")
-        self.qr_btn.setToolTip("Show a QR code to open the page on the phone")
-        actions_layout.addWidget(self.qr_btn)
-
-        actions_box.setLayout(actions_layout)
-        layout.addWidget(actions_box)
-
+        layout.addWidget(self.pages)
         self.setLayout(layout)
+
+        # Keep nav highlight in sync with current page
+        self.pages.currentChanged.connect(self.update_nav_highlight)
+        self.update_nav_highlight(self.pages.currentIndex())
 
     # UI HELPERS
     def _row(self, label, cfg_key):
@@ -340,9 +374,15 @@ class ControlGUI(QWidget):
         return btn
 
     def connect_signals(self):
+        # Navigation
+        self.nav_main_btn.clicked.connect(lambda: self.request_page(0))
+        self.nav_server_btn.clicked.connect(lambda: self.request_page(1))
+        self.nav_currency_btn.clicked.connect(lambda: self.request_page(2))
+
         self.start_btn.clicked.connect(self.start_server)
         self.stop_btn.clicked.connect(self.stop_server)
-        self.save_btn.clicked.connect(self.save_settings)
+        self.save_server_btn.clicked.connect(lambda: self.save_settings(show_message=True, restart_server=True))
+        self.save_currency_btn.clicked.connect(lambda: self.save_settings(show_message=True, restart_server=True))
         self.open_web_btn.clicked.connect(self.open_web)
         self.qr_btn.clicked.connect(self.show_qr)
         self.find_printers_btn.clicked.connect(self.find_zebra_printers)
@@ -364,6 +404,42 @@ class ControlGUI(QWidget):
 
         # Initial enable/disable state
         self.on_print_mode_changed()
+
+    def request_page(self, index: int):
+        if index == self.pages.currentIndex():
+            return
+
+        if self.dirty:
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowTitle("Unsaved changes")
+            msg.setText("You have unsaved changes. Save before leaving this page?")
+            save_btn = msg.addButton("Save", QMessageBox.AcceptRole)
+            discard_btn = msg.addButton("Discard", QMessageBox.DestructiveRole)
+            cancel_btn = msg.addButton("Cancel", QMessageBox.RejectRole)
+            msg.setDefaultButton(save_btn)
+            msg.exec_()
+
+            clicked = msg.clickedButton()
+            if clicked == cancel_btn:
+                return
+            if clicked == save_btn:
+                if not self.save_settings(show_message=False, restart_server=False):
+                    return
+            if clicked == discard_btn:
+                self.clear_dirty()
+
+        self.pages.setCurrentIndex(index)
+
+    def update_nav_highlight(self, index: int):
+        self.nav_main_btn.setProperty("navActive", "true" if index == 0 else "false")
+        self.nav_server_btn.setProperty("navActive", "true" if index == 1 else "false")
+        self.nav_currency_btn.setProperty("navActive", "true" if index == 2 else "false")
+
+        for btn in (self.nav_main_btn, self.nav_server_btn, self.nav_currency_btn):
+            btn.style().unpolish(btn)
+            btn.style().polish(btn)
+            btn.update()
 
     def on_print_mode_changed(self):
         self.mark_dirty()
@@ -479,7 +555,7 @@ class ControlGUI(QWidget):
         flow = PrinterScanFlow()
         flow.start_scan(self)
         
-    def save_settings(self):
+    def save_settings(self, show_message: bool = True, restart_server: bool = True) -> bool:
         print_mode = "NET/TCP" if self.print_mode_net_rb.isChecked() else "USB"
         usb_printer = (self.usb_printer_combo.currentText() or "").strip()
         if usb_printer.startswith("(No USB printers"):
@@ -498,13 +574,23 @@ class ControlGUI(QWidget):
             ),
             "start_server_on_launch": self.autostart_checkbox.isChecked()
         }
-        save_config(cfg)
-        QMessageBox.information(self, "Saved", "Settings saved.\nRestarting server...")
-        self.stop_server()
+        try:
+            save_config(cfg)
+        except Exception as e:
+            if show_message:
+                QMessageBox.critical(self, "Save Error", str(e))
+            return False
+
         self.clear_dirty()
-        
-        # start server 4.5 seconds later to allow time for shutdown
-        QTimer.singleShot(4500, self.start_server)
+
+        if show_message:
+            QMessageBox.information(self, "Saved", "Configuration saved.")
+
+        if restart_server:
+            self.stop_server()
+            QTimer.singleShot(4500, self.start_server)
+
+        return True
         
     def open_web(self):
         print("Opening web interface...")
@@ -581,14 +667,42 @@ class ControlGUI(QWidget):
             return
         self.dirty = True
         self.unsaved_label.setText("Unsaved changes")
-        self.save_btn.setStyleSheet("background-color:#ffd966")
+        if hasattr(self, "save_server_btn"):
+            self.save_server_btn.setStyleSheet("background-color:#ffd966")
+        if hasattr(self, "save_currency_btn"):
+            self.save_currency_btn.setStyleSheet("background-color:#ffd966")
 
     def clear_dirty(self):
         self.dirty = False
         self.unsaved_label.setText("")
-        self.save_btn.setStyleSheet("")
+        if hasattr(self, "save_server_btn"):
+            self.save_server_btn.setStyleSheet("")
+        if hasattr(self, "save_currency_btn"):
+            self.save_currency_btn.setStyleSheet("")
         
     def closeEvent(self, ev):
+        if self.dirty:
+            msg = QMessageBox(self)
+            msg.setIcon(QMessageBox.Warning)
+            msg.setWindowTitle("Unsaved changes")
+            msg.setText("You have unsaved changes. Save before exiting?")
+            save_btn = msg.addButton("Save", QMessageBox.AcceptRole)
+            discard_btn = msg.addButton("Discard", QMessageBox.DestructiveRole)
+            cancel_btn = msg.addButton("Cancel", QMessageBox.RejectRole)
+            msg.setDefaultButton(save_btn)
+            msg.exec_()
+
+            clicked = msg.clickedButton()
+            if clicked == cancel_btn:
+                ev.ignore()
+                return
+            if clicked == save_btn:
+                if not self.save_settings(show_message=False, restart_server=False):
+                    ev.ignore()
+                    return
+            if clicked == discard_btn:
+                self.clear_dirty()
+
         self.kill_all_servers()
         QTimer.singleShot(200, QApplication.instance().quit)
         ev.ignore()
