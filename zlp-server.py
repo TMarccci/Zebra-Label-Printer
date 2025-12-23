@@ -4,6 +4,7 @@ import time
 import socket
 import signal
 from flask import Flask, render_template, request, jsonify
+from zebra import Zebra
 
 from zlp_lib.zlp import resource_path, load_config as load_cfg, APP_FOLDER
 
@@ -15,10 +16,14 @@ printer_port = int(cfg.get("printer_port", 9100))
 show_decimals = cfg.get("show_decimals", False)
 decimal_places = cfg.get("decimal_places", 2)
 price_suggestion_type = cfg.get("price_suggestion_type", "Hungary")
+print_mode = cfg.get("print_mode", "NET/TCP")
+usb_printer_name = cfg.get("usb_printer", "")
 
 customConfig = {
     'printer_ip': printer_ip,
     'printer_port': printer_port,
+    'print_mode': print_mode,
+    'usb_printer': usb_printer_name,
     'currency': currency,
     'show_decimals': show_decimals,
     'decimal_places': decimal_places,
@@ -74,14 +79,31 @@ def generate_label(label_type: str, top_text: str, qty: int = 1, bottom_text: st
         raise ValueError("label_type must be 'normal' or 'sale'")
     return zpl.encode('utf-8')
     
-def send_zpl(printer_ip: str, printer_port: int, zpl_code: bytes):
-    # Send ZPL code to printer via TCP
+def send_zpl(zpl_code: bytes):
+    # Send ZPL code to printer based on print mode
+    if print_mode == "NET/TCP":
+        net_zpl(printer_ip, printer_port, zpl_code)
+    elif print_mode == "USB":
+        usb_zpl(usb_printer_name, zpl_code)
+    else:
+        raise ValueError("Invalid print mode specified.")
+
+def net_zpl(printer_ip: str, printer_port: int, zpl_code: bytes):
+    # Send ZPL code to network printer
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((printer_ip, printer_port))
             s.sendall(zpl_code)
     except Exception as e:
-        print(f"Failed to send ZPL code: {e}")
+        print(f"Failed to send ZPL code to network printer {printer_ip}:{printer_port}: {e}")
+ 
+def usb_zpl(printer_name: str, zpl_code: bytes):
+    # Send ZPL code to USB printer
+    try:
+        zebra = Zebra(printer_name)
+        zebra.output(zpl_code.decode('utf-8'))
+    except Exception as e:
+        print(f"Failed to send ZPL code to USB printer {printer_name}: {e}")
 
 def log(msg, success: bool):
     # Prepare log entry
@@ -121,19 +143,19 @@ def index():
 
     # 2. New price only (normal label)
     if old and disc:
-        send_zpl(printer_ip, printer_port, generate_label("sale", f"{top_text}", bottom_text=f"{bottom_text}", qty=qty, discount=f"{discount_text}"))      
+        send_zpl(generate_label("sale", f"{top_text}", bottom_text=f"{bottom_text}", qty=qty, discount=f"{discount_text}"))      
         log(f"Printed sale: {top_text} -> {bottom_text} | {discount_text}", True)
         return render_template("index.html", customConfig=customConfig)
 
     # 3. Old price only (normal label)
     if not old:
-        send_zpl(printer_ip, printer_port, generate_label("normal", f"{top_text}", qty=qty))
+        send_zpl(generate_label("normal", f"{top_text}", qty=qty))
         log(f"Printed normal: {top_text}", True)
         return render_template("index.html", customConfig=customConfig)
 
     # 4. Both old and new prices, no discount (sale label)
     if old and not disc:
-        send_zpl(printer_ip, printer_port, generate_label("sale", f"{top_text}", bottom_text=f"{bottom_text}", qty=qty, discount=f"{discount_text}"))
+        send_zpl(generate_label("sale", f"{top_text}", bottom_text=f"{bottom_text}", qty=qty, discount=f"{discount_text}"))
         log(f"Printed sale: {top_text} -> {bottom_text} | {discount_text}", True)
         return render_template("index.html", customConfig=customConfig)
 

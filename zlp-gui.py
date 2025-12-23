@@ -13,10 +13,10 @@ from PyQt5.QtNetwork import QLocalServer, QLocalSocket
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QLineEdit, QPushButton, QMessageBox, QCheckBox, QSpinBox,
-    QRadioButton, QMenuBar, QVBoxLayout, QGroupBox, QFormLayout,
+    QRadioButton, QMenuBar, QVBoxLayout, QGroupBox, QFormLayout, QComboBox
 )
 
-from zlp_lib.zlp import resource_path, load_config, save_config, test_print, CURRENT_PROGRAM_VERSION, APP_FOLDER, USER
+from zlp_lib.zlp import resource_path, load_config, save_config, test_print, get_usb_printers, test_usb_print, CURRENT_PROGRAM_VERSION, APP_FOLDER, USER
 from zlp_gui.printerscan import PrinterScanFlow
 from zlp_gui.update import CheckforUpdate
 
@@ -87,16 +87,19 @@ class ControlGUI(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Zebra Label Printer")
-        self.resize(500, 640)
+        self.resize(600, 775)
         self.setFixedSize(self.size())
 
         self.server_process = None
         self.config = load_config()
         self.help_window = None
         self.dirty = False
+        self._suppress_dirty = True
 
         self.setup_ui()
         self.connect_signals()
+        self.clear_dirty()
+        self._suppress_dirty = False
 
         # Poll every second
         self.poll = QTimer(self)
@@ -165,32 +168,89 @@ class ControlGUI(QWidget):
 
         # Server settings group
         server_box = QGroupBox("Server Settings")
+        server_layout = QVBoxLayout()
+
+        # Webserver port
         server_form = QFormLayout()
         self.server_port_input = QLineEdit(self.config["server_port"])
         self.server_port_input.setToolTip("Port number for the built-in web interface")
         server_form.addRow("Webserver Port:", self.server_port_input)
+        server_layout.addLayout(server_form)
 
+        # Print mode selector
+        mode_row = QHBoxLayout()
+        mode_row.addWidget(QLabel("Print Mode:"))
+        self.print_mode_net_rb = QRadioButton("NET/TCP")
+        self.print_mode_usb_rb = QRadioButton("USB")
+        current_mode = (self.config.get("print_mode") or "NET/TCP").strip()
+        if current_mode.upper() == "USB":
+            self.print_mode_usb_rb.setChecked(True)
+        else:
+            self.print_mode_net_rb.setChecked(True)
+        mode_row.addWidget(self.print_mode_net_rb)
+        mode_row.addWidget(self.print_mode_usb_rb)
+        mode_row.addStretch(1)
+        server_layout.addLayout(mode_row)
+
+        # Two columns: NET/TCP settings + USB settings
+        cols = QHBoxLayout()
+
+        self.net_settings_box = QGroupBox("NET/TCP Settings")
+        net_form = QFormLayout()
         ip_row = QHBoxLayout()
-        self.printer_ip_input = QLineEdit(self.config["printer_ip"])
-        self.printer_ip_input.setToolTip("Printer IP address (e.g. 192.168.1.100)")
-        ip_row.addWidget(self.printer_ip_input)
         self.find_printers_btn = QPushButton("Find Printers")
         self.find_printers_btn.setToolTip("Scan the network for compatible printers")
-        ip_row.addWidget(self.find_printers_btn)
-        self.test_printer_btn = QPushButton("Test Printer")
-        self.test_printer_btn.setToolTip("Try connecting to the printer on port 9100")
-        ip_row.addWidget(self.test_printer_btn)
-        server_form.addRow(QLabel("Printer IP:"), ip_row)
+        
+        self.printer_ip_input = QLineEdit(self.config["printer_ip"])
+        self.printer_ip_input.setToolTip("Printer IP address (e.g. 192.168.1.100)")
+        
+        net_form.addWidget(self.find_printers_btn)
+        ip_row.addWidget(self.printer_ip_input)
+        net_form.addRow(QLabel("Printer IP:"), ip_row)
 
         self.printer_port_input = QLineEdit(self.config["printer_port"])
         self.printer_port_input.setToolTip("Usually 9100 for Zebra printers")
-        server_form.addRow("Printer Port:", self.printer_port_input)
+        net_form.addRow("Printer Port:", self.printer_port_input)
+        self.net_settings_box.setLayout(net_form)
+        cols.addWidget(self.net_settings_box, 1)
+
+        self.usb_settings_box = QGroupBox("USB Settings")
+        usb_form = QFormLayout()
+        self.usb_printer_combo = QComboBox()
+        self.usb_printer_combo.setToolTip("Select the local USB printer")
+        self.usb_refresh_btn = QPushButton("Refresh")
+        self.usb_refresh_btn.setToolTip("Re-scan connected USB printers")
+        usb_printers = get_usb_printers()
+        if usb_printers:
+            self.usb_printer_combo.addItems(usb_printers)
+        else:
+            self.usb_printer_combo.addItem("(No USB printers found)")
+
+        saved_usb = (self.config.get("usb_printer") or "").strip()
+        if saved_usb and saved_usb not in usb_printers:
+            self.usb_printer_combo.insertItem(0, saved_usb)
+            self.usb_printer_combo.setCurrentIndex(0)
+        elif saved_usb and saved_usb in usb_printers:
+            self.usb_printer_combo.setCurrentText(saved_usb)
+
+        usb_form.addRow("USB Printer:", self.usb_printer_combo)
+        usb_form.addRow(self.usb_refresh_btn)
+        self.usb_settings_box.setLayout(usb_form)
+        cols.addWidget(self.usb_settings_box, 1)
+
+        server_layout.addLayout(cols)
+
+        # Full-width Test Printer button (under both columns)
+        self.test_printer_btn = QPushButton("Test Printer")
+        self.test_printer_btn.setToolTip("Test printing for the currently selected mode")
+        server_layout.addWidget(self.test_printer_btn)
 
         self.autostart_checkbox = QCheckBox("Start server on launch")
         self.autostart_checkbox.setChecked(self.config.get("start_server_on_launch"))
         self.autostart_checkbox.setToolTip("Automatically start the web server when the app opens")
-        server_form.addRow(self.autostart_checkbox)
-        server_box.setLayout(server_form)
+        server_layout.addWidget(self.autostart_checkbox)
+
+        server_box.setLayout(server_layout)
         layout.addWidget(server_box)
         
         layout.addSpacing(8)
@@ -286,22 +346,82 @@ class ControlGUI(QWidget):
         self.open_web_btn.clicked.connect(self.open_web)
         self.qr_btn.clicked.connect(self.show_qr)
         self.find_printers_btn.clicked.connect(self.find_zebra_printers)
-        # if test_print True, show success message; else show failure message
-        self.test_printer_btn.clicked.connect(lambda:
-            QMessageBox.information(None, "Test Print", f"Test print sent to {self.printer_ip_input.text().strip()} successfully.") 
-            if test_print(self.printer_ip_input.text().strip()) 
-            else QMessageBox.warning(None, "Test Print", f"Failed to send test print to {self.printer_ip_input.text().strip()}.")
-        )
+        self.test_printer_btn.clicked.connect(self.on_test_printer)
+        self.usb_refresh_btn.clicked.connect(self.refresh_usb_printers)
 
         # Mark dirty on any field change
         self.server_port_input.textChanged.connect(self.mark_dirty)
         self.printer_ip_input.textChanged.connect(self.mark_dirty)
         self.printer_port_input.textChanged.connect(self.mark_dirty)
         self.autostart_checkbox.toggled.connect(self.mark_dirty)
+        self.print_mode_net_rb.toggled.connect(self.on_print_mode_changed)
+        self.print_mode_usb_rb.toggled.connect(self.on_print_mode_changed)
+        self.usb_printer_combo.currentTextChanged.connect(self.mark_dirty)
         self.decimals_checkbox.toggled.connect(self.mark_dirty)
         self.decimals_spin.valueChanged.connect(self.mark_dirty)
         for rb in getattr(self, 'price_suggestion_type_radios', []):
             rb.toggled.connect(self.mark_dirty)
+
+        # Initial enable/disable state
+        self.on_print_mode_changed()
+
+    def on_print_mode_changed(self):
+        self.mark_dirty()
+        is_net = self.print_mode_net_rb.isChecked()
+
+        self.net_settings_box.setEnabled(is_net)
+        self.usb_settings_box.setEnabled(not is_net)
+
+        # Keep Find Printers under NET/TCP only
+        self.find_printers_btn.setEnabled(is_net)
+
+        # If there are no printers found placeholder, don't allow selecting it
+        if not is_net:
+            if self.usb_printer_combo.count() == 1 and self.usb_printer_combo.itemText(0).startswith("(No USB printers"):
+                self.usb_printer_combo.setEnabled(False)
+            else:
+                self.usb_printer_combo.setEnabled(True)
+        else:
+            self.usb_printer_combo.setEnabled(True)
+
+    def refresh_usb_printers(self):
+        previous = (self.usb_printer_combo.currentText() or "").strip()
+        self._suppress_dirty = True
+        try:
+            self.usb_printer_combo.blockSignals(True)
+            self.usb_printer_combo.clear()
+
+            usb_printers = get_usb_printers()
+            if usb_printers:
+                self.usb_printer_combo.addItems(usb_printers)
+            else:
+                self.usb_printer_combo.addItem("(No USB printers found)")
+
+            if previous and previous in usb_printers:
+                self.usb_printer_combo.setCurrentText(previous)
+            elif previous and previous not in usb_printers and not previous.startswith("(No USB printers"):
+                # Keep previous selection visible if printer disappeared
+                self.usb_printer_combo.insertItem(0, previous)
+                self.usb_printer_combo.setCurrentIndex(0)
+        finally:
+            self.usb_printer_combo.blockSignals(False)
+            self._suppress_dirty = False
+            self.on_print_mode_changed()
+
+    def on_test_printer(self):
+        if self.print_mode_net_rb.isChecked():
+            ip = self.printer_ip_input.text().strip()
+            QMessageBox.information(None, "Test Print", f"Test print sent to {ip} successfully.") if test_print(ip) else QMessageBox.warning(None, "Test Print", f"Failed to send test print to {ip}.")
+            return
+        elif self.print_mode_usb_rb.isChecked():
+            usb_printer = (self.usb_printer_combo.currentText() or "").strip()
+            if usb_printer.startswith("(No USB printers"):
+                QMessageBox.warning(self, "USB Mode", "No USB printer selected.")
+                return
+            QMessageBox.information(None, "Test Print", f"Test print sent to USB printer {usb_printer} successfully.") if test_usb_print(usb_printer) else QMessageBox.warning(None, "Test Print", f"Failed to send test print to USB printer {usb_printer}.")
+            return
+
+        QMessageBox.information(self, "USB Mode", "USB printing test is not implemented yet.")
 
     # ---------------------------------------
     # MARK: SERVER CONTROL
@@ -360,10 +480,16 @@ class ControlGUI(QWidget):
         flow.start_scan(self)
         
     def save_settings(self):
+        print_mode = "NET/TCP" if self.print_mode_net_rb.isChecked() else "USB"
+        usb_printer = (self.usb_printer_combo.currentText() or "").strip()
+        if usb_printer.startswith("(No USB printers"):
+            usb_printer = ""
         cfg = {
             "server_port": self.server_port_input.text(),
             "printer_ip": self.printer_ip_input.text(),
             "printer_port": self.printer_port_input.text(),
+            "print_mode": print_mode,
+            "usb_printer": usb_printer,
             "currency": self.currency_input.text(),
             "show_decimals": self.decimals_checkbox.isChecked(),
             "decimal_places": self.decimals_spin.value(),
@@ -451,6 +577,8 @@ class ControlGUI(QWidget):
         self.help_window.show()
 
     def mark_dirty(self):
+        if getattr(self, "_suppress_dirty", False):
+            return
         self.dirty = True
         self.unsaved_label.setText("Unsaved changes")
         self.save_btn.setStyleSheet("background-color:#ffd966")

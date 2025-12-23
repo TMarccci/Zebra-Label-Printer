@@ -30,10 +30,10 @@ StringFileInfo(
   StringTable(
     u'040904B0',
     [StringStruct(u'CompanyName', u'TMarccci Devs'),
-    StringStruct(u'FileVersion', u'1.1.6'),
+    StringStruct(u'FileVersion', u'1.2.0'),
     StringStruct(u'InternalName', u'ZLP'),
     StringStruct(u'LegalCopyright', u'Copyright (c) TMarccci Devs'),
-    StringStruct(u'ProductVersion', u'1.1.6')])
+    StringStruct(u'ProductVersion', u'1.2.0')])
   ]), 
 VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
   ]
