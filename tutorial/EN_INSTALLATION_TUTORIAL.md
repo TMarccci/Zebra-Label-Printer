@@ -10,8 +10,8 @@ If the ethernet icon is green then your printer is connected to the network.
 
 | Status | Image |
 |--------|-------|
-| Printer is okay | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/OK.JPEG" alt="Zebra Printer Network Status" width="420" /> |
-| Printer is not okay | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/NO_NETWORK.JPEG" alt="Zebra Printer Network Status Not OK" width="420" /> |
+| Printer is ready to work with both NET/TCP and USB mode | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/OK.JPEG" alt="Zebra Printer Network Status" width="420" /> |
+| Printer is not connected to the network, it is only working with USB mode | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/NO_NETWORK.JPEG" alt="Zebra Printer Network Status Not OK" width="420" /> |
 
 **If you encounter issues with network connectivity, ensure the following:**
 
@@ -38,25 +38,55 @@ Make sure you have an ethernet cable connected to your printer in the port below
 
 ## First Time Configuration
 
-1. Open `Zebra Label Printer.exe`. if not opened automatically after installation.
-2. In the configuration window, click on `Find Printers` to scan your network for Zebra printers.
-3. Select your printer from the list. You can try to print a test label to confirm it is your printer.
-4. If your printer is not found, manually enter the IP address and port (usually `9100`).
-5. Choose your currency, price suggestions, and decimal settings depending on your store's requirements.
-6. Save the settings.
-7. Click `Start Server`. if not started automatically. 
-8. To Open the web interface, click on `Open Web Interface` button.
+The app has 3 pages at the top: **Main**, **Server Settings**, **Currency**.
 
-(Example of the configuration window)
+1. Open `Zebra Label Printer.exe` (if it didn't open automatically after installation).
+2. Go to **Server Settings**.
 
-<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT.png" alt="Zebra Label Printer Configuration Window" width="620" />
+### Option A: NET/TCP (Network printer)
+
+1. Set **Print Mode** to `NET/TCP`.
+2. Click `Find Printers` to scan your network for Zebra printers.
+3. Select/enter the printer IP (and port, usually `9100`).
+4. Click `Test Printer`.
+5. Click `Save Configuration` (at the bottom).
+
+### Option B: USB (Local USB printer)
+
+1. Set **Print Mode** to `USB`.
+2. Select your Zebra printer from the dropdown.
+3. If you don't see it, click `Refresh`.
+4. Click `Test Printer`.
+5. Click `Save Configuration` (at the bottom).
+
+### Currency
+
+1. Go to **Currency**.
+2. Choose currency, price suggestion type, and decimals.
+3. Click `Save Configuration` (at the bottom).
+
+### Start printing
+
+1. Go to **Main**.
+2. Click `Start Server` (if it didn't start automatically).
+3. Click `Open Printer Page`.
+
+(Example pages)
+
+| Page | Image |
+|------|-------|
+| Main | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/APP_SCREENSHOT_1.png" alt="Zebra Label Printer - Main page" width="520" /> |
+| Server Settings | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/APP_SCREENSHOT_2.png" alt="Zebra Label Printer - Server Settings page" width="520" /> |
+| Currency | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/APP_SCREENSHOT_3.png" alt="Zebra Label Printer - Currency page" width="520" /> |
 
 ---
 
 **Notes:**
 - If you encounter any issues during installation or configuration, refer to the Troubleshooting section in the README.md or contact support for assistance.
-- If you kept the default settings during installation, the application will create a Desktop icon and it will Start with Windows for convenience. (You just have to press the `Open Web Interface` button to start using it.)
+- If you kept the default settings during installation, the application will create a Desktop icon and it will Start with Windows for convenience. (You just have to press the `Open Printer Page` button to start using it.)
 - You can save the Web Interface link as a bookmark in your browser for easy access.
+
+Tip: If you try to leave a page with unsaved changes, the app will ask you to Save / Discard / Cancel.
 
 ## Printing Your First Label
 
@@ -68,7 +98,7 @@ Make sure you have an ethernet cable connected to your printer in the port below
 
 (Web Interface Screenshot)
 
-<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT_2.png" alt="Zebra Label Printer Web Interface" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT.png" alt="Zebra Label Printer Web Interface" />
 
 
 **Congratulations!** You have successfully installed and configured the Zebra Label Printer application. You can now print price labels efficiently using the web interface.

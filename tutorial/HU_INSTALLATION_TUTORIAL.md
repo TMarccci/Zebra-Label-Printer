@@ -7,8 +7,8 @@ Ellenőrizd, hogy a Zebra nyomtató hálózaton van-e: nyomd meg az X gombot a n
 
 | Állapot | Kép |
 |--------|-----|
-| Nyomtató rendben | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/OK.JPEG" alt="Zebra nyomtató hálózati állapot" width="420" /> |
-| Nyomtató nincs csatlakoztatva | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/NO_NETWORK.JPEG" alt="Zebra nyomtató hálózati állapot – nincs kapcsolat" width="420" /> |
+| A nyomtató használható NET/TCP és USB módban is | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/OK.JPEG" alt="Zebra nyomtató hálózati állapot" width="420" /> |
+| A nyomtató nincs hálózatra csatlakoztatva — csak USB módban működik | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/NO_NETWORK.JPEG" alt="Zebra nyomtató hálózati állapot – nincs kapcsolat" width="420" /> |
 
 **Ha hálózati problémát tapasztalsz, ellenőrizd az alábbiakat:**
 
@@ -35,25 +35,55 @@ Győződj meg róla, hogy az Ethernet kábel be van dugva a nyomtató alábbi po
 
 ## Első beállítás
 
-1. Nyisd meg a `Zebra Label Printer.exe` fájlt (ha a telepítés után nem indult el automatikusan).
-2. A beállítási ablakban kattints a `Find Printers` gombra, hogy a rendszer felderítse a hálózaton lévő Zebra nyomtatókat.
-3. Válaszd ki a nyomtatót a listából. Küldhetsz próba nyomtatást is, hogy megerősítsd, a megfelelő eszközről van szó.
-4. Ha a nyomtató nem található, add meg kézzel az IP címet és a portot (általában `9100`).
-5. Válaszd ki a pénznemet, az árjavaslatokat és a tizedesjegyek beállításait az üzlet igényei szerint.
-6. Mentsd el a beállításokat.
-7. Kattints a `Start Server` gombra (ha nem indult el automatikusan).
-8. A webes felület megnyitásához kattints az `Open Web Interface` gombra.
+Az alkalmazás tetején 3 oldal van: **Main**, **Server Settings**, **Currency**.
 
-(Konfigurációs ablak példa)
+1. Nyisd meg a `Zebra Label Printer.exe` fájlt (ha nem indult el automatikusan a telepítés után).
+2. Menj a **Server Settings** oldalra.
 
-<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT.png" alt="Zebra Label Printer konfigurációs ablak" width="620" />
+### A opció: NET/TCP (hálózati nyomtató)
+
+1. A **Print Mode** legyen `NET/TCP`.
+2. Kattints a `Find Printers` gombra a hálózati Zebra nyomtatók kereséséhez.
+3. Válaszd ki/írd be a nyomtató IP címét (és a portot, általában `9100`).
+4. Kattints a `Test Printer` gombra.
+5. Kattints a `Save Configuration` gombra (alul).
+
+### B opció: USB (helyi USB nyomtató)
+
+1. A **Print Mode** legyen `USB`.
+2. Válaszd ki a Zebra nyomtatót a legördülő listából.
+3. Ha nem látod, kattints a `Refresh` gombra.
+4. Kattints a `Test Printer` gombra.
+5. Kattints a `Save Configuration` gombra (alul).
+
+### Pénznem
+
+1. Menj a **Currency** oldalra.
+2. Állítsd be a pénznemet, árjavaslat típusát és a tizedeseket.
+3. Kattints a `Save Configuration` gombra (alul).
+
+### Nyomtatás indítása
+
+1. Menj a **Main** oldalra.
+2. Kattints a `Start Server` gombra (ha nem indult el automatikusan).
+3. Kattints az `Open Printer Page` gombra.
+
+(Példa oldalak)
+
+| Oldal | Kép |
+|------|-----|
+| Main | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/APP_SCREENSHOT_1.png" alt="Zebra Label Printer - Main oldal" width="520" /> |
+| Server Settings | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/APP_SCREENSHOT_2.png" alt="Zebra Label Printer - Server Settings oldal" width="520" /> |
+| Currency | <img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/APP_SCREENSHOT_3.png" alt="Zebra Label Printer - Currency oldal" width="520" /> |
 
 ---
 
 **Megjegyzések:**
 - Ha bármilyen problémát tapasztalsz a telepítés vagy beállítás során, nézd meg a README.md hibaelhárítás részét, vagy vedd fel a kapcsolatot a támogatással.
-- Ha a telepítésnél az alapértelmezett beállításokat hagytad, az alkalmazás létrehoz egy asztali ikont, és a Windowszal együtt indul. (Elég az `Open Web Interface` gombra kattintani a használat elkezdéséhez.)
+- Ha a telepítésnél az alapértelmezett beállításokat hagytad, az alkalmazás létrehoz egy asztali ikont, és a Windowszal együtt indul. (Elég az `Open Printer Page` gombra kattintani a használat elkezdéséhez.)
 - A webes felület hivatkozását elmentheted könyvjelzőként a böngészőben.
+
+Tipp: Ha mentés nélkül próbálsz oldalt váltani, az app rákérdez: Save / Discard / Cancel.
 
 ## Az első címke nyomtatása
 
@@ -65,7 +95,7 @@ Győződj meg róla, hogy az Ethernet kábel be van dugva a nyomtató alábbi po
 
 (Webes felület képernyőképe)
 
-<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT_2.png" alt="Zebra Label Printer webes felület" />
+<img src="https://raw.githubusercontent.com/TMarccci/Zebra-Label-Printer/refs/heads/main/tutorial/pictures/SCREENSHOT.png" alt="Zebra Label Printer webes felület" />
 
 
 **Gratulálunk!** Sikeresen telepítetted és beállítottad a Zebra Label Printer alkalmazást. Mostantól hatékonyan nyomtathatsz ár címkéket a webes felületen keresztül.

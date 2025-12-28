@@ -114,6 +114,16 @@ Tip: The GUI shows an `Unsaved changes` indicator when you edit settings. Click 
 - **Slow downloads in installer**: Progress bar and animated dots indicate activity; wait until the percentage reaches 100%.
 - **Update available**: Use `Check for Updates` in the GUI. The updater can self-update.
 
+## Export tutorials to PDF
+
+Generate PDF files from the Markdown tutorials in `tutorial/`:
+
+```powershell
+python .\tools\md_to_pdf.py .\tutorial --outdir .\tutorial\pdf --recursive
+```
+
+This writes PDFs into `tutorial/pdf/` with the same filenames.
+
 ## License
 
 See LICENSE.txt for details.
