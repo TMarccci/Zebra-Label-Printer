@@ -446,6 +446,13 @@ def _md_to_reportlab_blocks(md_text: str) -> list[tuple[str, object]]:
         replaced = _RE_MD_IMAGE.sub(lambda m2: f"Image: {m2.group(2)}", line)
         paragraph.append(_sanitize_inline_html(replaced))
         i += 1
+        
+        # br page break
+        if line.strip().lower() == "<br>":
+            flush_paragraph(paragraph)
+            blocks.append(("br", ""))
+            i += 1
+            continue
 
     flush_paragraph(paragraph)
     if in_code and code_lines:
@@ -478,7 +485,7 @@ def _build_reportlab_story(md_text: str, base_dir: Path) -> list[object]:
         parent=base["Normal"],
         fontName=normal,
         fontSize=11,
-        leading=14,
+        leading=12,
         alignment=TA_LEFT,
     )
     body_bold = ParagraphStyle(name="BodyBold", parent=body, fontName=bold)
@@ -498,7 +505,7 @@ def _build_reportlab_story(md_text: str, base_dir: Path) -> list[object]:
     # Printable area (A4 minus margins) for automatic image scaling.
     page_w, page_h = pagesizes.A4
     max_img_w = page_w - (14 * mm) - (14 * mm)
-    max_img_h = page_h - (16 * mm) - (16 * mm)
+    max_img_h = page_h - (16 * mm) - (16 * mm)  # leave extra room for header/footer
 
     for kind, payload in _md_to_reportlab_blocks(md_text):
         if kind in heading_styles:
@@ -558,14 +565,30 @@ def _build_reportlab_story(md_text: str, base_dir: Path) -> list[object]:
             # If width is provided, scale to that width in points.
             if width_px:
                 target_w = float(width_px) * 0.75  # px->pt approx at 96dpi
-                if img_flow.imageWidth:
-                    scale = target_w / float(img_flow.imageWidth)
-                    img_flow.drawWidth = target_w
-                    img_flow.drawHeight = float(img_flow.imageHeight) * scale
+            if img_flow.imageWidth:
+                scale = target_w / float(img_flow.imageWidth)
+                img_flow.drawWidth = target_w
+                img_flow.drawHeight = float(img_flow.imageHeight) * scale
+            # Add some padding around the image.
+            img_flow.hAlign = "LEFT"
+            
             # Always cap to printable area.
             img_flow = _fit_image(img_flow, max_width_pt=max_img_w, max_height_pt=max_img_h)
+
+            # Reduce displayed size to 90% (uniform scale to preserve aspect ratio).
+            try:
+                img_flow.drawWidth *= 0.80
+                img_flow.drawHeight *= 0.80
+                # if image is taller than max height/3, scale down further to fit
+                if img_flow.drawHeight > max_img_h / 3:
+                    scale = (max_img_h / 3) / img_flow.drawHeight
+                    img_flow.drawWidth *= scale
+                    img_flow.drawHeight *= scale
+            except Exception:
+                pass
+
             story.append(img_flow)
-            story.append(Spacer(1, 8))
+            story.append(Spacer(1, 6))
             continue
         if kind == "table":
             matrix_raw = _pipe_table_to_matrix(payload)  # type: ignore[arg-type]
@@ -605,8 +628,8 @@ def _build_reportlab_story(md_text: str, base_dir: Path) -> list[object]:
                                     img_flow.drawWidth = target_w
                                     img_flow.drawHeight = float(img_flow.imageHeight) * scale
                             # Fit to column width (minus padding) and also cap to page height.
-                            cell_max_w = max(col_widths[col_idx] - 12, 50)
-                            cell_max_h = max_img_h * 0.75
+                            cell_max_w = max(col_widths[col_idx] - 12, 50) * 1.0 
+                            cell_max_h = max_img_h * 0.4
                             img_flow = _fit_image(img_flow, max_width_pt=cell_max_w, max_height_pt=cell_max_h)
                             out_row.append(img_flow)
                             continue
@@ -631,6 +654,10 @@ def _build_reportlab_story(md_text: str, base_dir: Path) -> list[object]:
                 )
                 story.append(tbl)
                 story.append(Spacer(1, 8))
+            continue
+        if kind == "br":
+            # Break 
+            story.append(Spacer(1, 85))
             continue
 
     return story
