@@ -7,7 +7,7 @@ import webbrowser
 import requests
 import shutil
 import qrcode
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, pyqtSignal
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtNetwork import QLocalServer, QLocalSocket
 from PyQt5.QtWidgets import (
@@ -84,6 +84,9 @@ def ensure_single_instance(app):
 # MARK: GUI
 # ---------------------------------------
 class ControlGUI(QWidget):
+    payment_unpaid = pyqtSignal()
+    payment_ok = pyqtSignal()
+
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Zebra Label Printer")
@@ -95,6 +98,11 @@ class ControlGUI(QWidget):
         self.help_window = None
         self.dirty = False
         self._suppress_dirty = True
+        self._autostart_requested = bool(self.config.get("start_server_on_launch", False))
+        self._autostart_scheduled = False
+
+        self.payment_unpaid.connect(self._on_payment_unpaid)
+        self.payment_ok.connect(self._on_payment_ok)
 
         self.setup_ui()
         self.connect_signals()
@@ -106,10 +114,12 @@ class ControlGUI(QWidget):
         self.poll.timeout.connect(self.update_status)
         self.poll.start(1000)
 
-        # Autostart
-        if self.config.get("start_server_on_launch", False):
-            print("Autostarting server...")
-            QTimer.singleShot(2000, self.start_server)
+        # Check payment status in background (don't block UI)
+        # - API: https://heartbeat.tmarccci.hu/api/zlp
+        # - If unpaid: returns 402
+        # - If paid: returns 200
+        # - If unreachable: assume paid (avoid false positives)
+        threading.Thread(target=self._check_payment_status, daemon=True).start()
             
         # Try to signal a heartbeat to https://heartbeat.tmarccci.hu/api/beat?device-name=EXAMPLE-PC&version=1.1.1 on a background thread
         def send_heartbeat():
@@ -122,6 +132,56 @@ class ControlGUI(QWidget):
                 print("Failed to send heartbeat.")
                 
         threading.Thread(target=send_heartbeat, daemon=True).start()
+
+    def _on_payment_ok(self):
+        if self._autostart_requested and not self._autostart_scheduled:
+            self._autostart_scheduled = True
+            print("Autostarting server...")
+            QTimer.singleShot(2000, self.start_server)
+
+    def _on_payment_unpaid(self):
+        print("Payment required (402). Closing app.")
+        try:
+            self.stop_server()
+        except Exception:
+            try:
+                self.kill_all_servers()
+            except Exception:
+                pass
+        QMessageBox.critical(
+            self,
+            "Payment Required",
+            "This device is not paid/activated. The application will now close.",
+        )
+        QApplication.instance().quit()
+
+    def _check_payment_status(self):
+        try:
+            device_name = os.getenv("COMPUTERNAME", "Unknown-PC")
+            print("Checking payment status...")
+
+            resp = requests.get(
+                "https://heartbeat.tmarccci.hu/api/zlp",
+                params={"device-name": device_name, "version": CURRENT_PROGRAM_VERSION},
+                timeout=5,
+            )
+
+            print(f"Payment check HTTP {resp.status_code}")
+
+            if resp.status_code == 402:
+                self.payment_unpaid.emit()
+                return
+
+            if resp.status_code != 200:
+                print(f"Payment check unexpected status: {resp.status_code} (assuming paid)")
+                self.payment_ok.emit()
+                return
+
+            print("Payment check OK (paid).")
+            self.payment_ok.emit()
+        except Exception as e:
+            print(f"Payment check failed/unreachable (assuming paid): {e}")
+            self.payment_ok.emit()
 
     # UI
     def setup_ui(self):
@@ -723,7 +783,7 @@ class ControlGUI(QWidget):
                 QMessageBox.critical(self, "Error", "Uninstaller not found.")
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
-    
+                
 # ---------------------------------------
 # MARK: ENTRY
 # ---------------------------------------
